@@ -5,7 +5,6 @@ Window::Window(const std::string& title, const SDL_Color bg_color) :
 {
     if(SDL_Init(SDL_INIT_VIDEO) < 0) std::cout << "Failed to initialize SDL library\n";
     CreateWindow();
-    SDL_SetRenderDrawColor(m_renderer, m_bg_color.r, m_bg_color.g, m_bg_color.b, 255);
 }
 
 Window::~Window()
@@ -44,8 +43,9 @@ bool Window::HasError() const
     return !m_window || !m_renderer;
 }
 
-void Window::ClearRenderer() const
+void Window::ClearRenderer()
 {
+    SetRenderColor(m_bg_color);
     SDL_RenderClear(m_renderer);
 }
 
@@ -54,10 +54,9 @@ void Window::UpdateRender() const
     SDL_RenderPresent(m_renderer);
 }
 
-void Window::SetBackgroundColor(const SDL_Color bg_color)
+void Window::SetRenderColor(const SDL_Color& color)
 {
-    m_bg_color = bg_color;
-    SDL_SetRenderDrawColor(m_renderer, m_bg_color.r, m_bg_color.g, m_bg_color.b, 255);
+    SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, 255);
 }
 
 void Window::HideCursor()

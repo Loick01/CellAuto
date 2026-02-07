@@ -5,10 +5,7 @@
 
 #include <SDL2/SDL.h>
 
-struct MousePosition
-{
-    int x, y;
-};
+#include "type.hpp"
 
 class ActionController
 {
@@ -23,8 +20,10 @@ class KeyboardMouseActionController : public ActionController
     private:
         const Uint8* m_keyboard_state;
         Uint32 m_mouse_state;
+        bool m_trigger_pause;
 
-    public: 
+    public:
+        KeyboardMouseActionController(); 
         bool IsPauseAction() override;
         bool IsSetAction() override;
         void GetActions(MousePosition& current_mouse) override;
@@ -48,8 +47,13 @@ class GameOfLifeEventController: public EventController
     private:
         ActionController* m_action_controller;
         MousePosition m_current_mouse;
+        bool m_is_paused;
+        bool m_is_set;
 
     public:
         GameOfLifeEventController();
+        MousePosition GetMouse() const;
+        bool GetIsPaused() const;
+        bool GetIsSet() const;
         void HandleEvents() override;
 };

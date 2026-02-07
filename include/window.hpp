@@ -25,8 +25,8 @@ class Window
         int GetWidth() const;
         int GetHeight() const;
         bool HasError() const;
-        void ClearRenderer() const;
+        void ClearRenderer();
         void UpdateRender() const;
-        void SetBackgroundColor(const SDL_Color bg_color);
+        void SetRenderColor(const SDL_Color& color);
         void HideCursor();
 };

@@ -8,9 +8,6 @@
 #include "type.hpp"
 #include "window.hpp"
 
-#define GRID_WIDTH 128
-#define GRID_HEIGHT 128
-
 #define BIRTH 3
 #define UNDERPOPULATION 2
 #define OVERPOPULATION 3
@@ -48,15 +45,33 @@ class Grid2D
                 Randomize();
                 m_last_cell = {-1, -1}; // Unvalid cell
             }
+            
+            std::pair<int, int> GetMargin() const { 
+                return m_grid_margin;
+            }
 
+            std::bitset<GRID_WIDTH*GRID_HEIGHT> GetGrid() const {
+                return m_current_grid;
+            }
+
+            int GetWidth() const {
+                return GRID_WIDTH;
+            }
+
+            int GetHeight() const {
+                return GRID_HEIGHT;
+            }
+
+            int GetCellSize() const {
+                return m_cell_size;
+            }
+            
             void Empty(){ // Set each bit to 0
                 m_current_grid.reset();
-                m_next_grid.reset();
             }
 
             void Fill(){ // Set each bit to 1
                 m_current_grid.set();
-                m_next_grid.set();
             }
 
             void Randomize(){

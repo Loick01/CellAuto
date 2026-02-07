@@ -2,6 +2,7 @@
 
 #include "event.hpp"
 #include "grid.hpp"
+#include "result.hpp"
 #include "time.hpp"
 #include "window.hpp"
 
@@ -12,6 +13,8 @@ int main()
     Window window("GameOfLife", {50,50,50});
     GameOfLifeEventController golEventController;
     Grid2D gol(window, {25, 240, 50});
+    TextureResult result(window.GetRenderer(), gol.GetMargin(), gol.GetWidth(), gol.GetHeight(), gol.GetCellSize());
+    result.Update(gol.GetGrid());
     bool gameloop = true;
     Time time;
     float timer = UPDATE_TIMER;
@@ -32,10 +35,12 @@ int main()
             if (timer < 0.0){
                 timer = UPDATE_TIMER;
                 gol.Update();
+                result.Update(gol.GetGrid());
             }
         }
 
         gol.Draw();
+        result.Draw();
         window.UpdateRender();
     }
 

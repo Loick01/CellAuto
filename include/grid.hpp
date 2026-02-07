@@ -8,8 +8,8 @@
 #include "type.hpp"
 #include "window.hpp"
 
-#define GRID_WIDTH 32
-#define GRID_HEIGHT 32
+#define GRID_WIDTH 128
+#define GRID_HEIGHT 128
 
 #define BIRTH 3
 #define UNDERPOPULATION 2
@@ -23,9 +23,27 @@ class Grid2D
         Window& m_window;
         SDL_Color m_cell_color;
         std::pair<int, int> m_last_cell; // Last interacted cell with the mouse
+        std::pair<int, int> m_grid_margin;
+        int m_cell_size;
 
         public:
-            Grid2D(Window& window, const SDL_Color& cell_color) : m_window(window), m_cell_color(cell_color){
+            Grid2D(Window& window, const SDL_Color& cell_color) : 
+            m_window(window), m_cell_color(cell_color)
+            {
+                const int window_width = window.GetWidth();
+                const int window_height = window.GetHeight();
+                const int max_size_x = window_width/GRID_WIDTH; // Maximum cell size to fill window width
+                const int max_size_y = window_height/GRID_HEIGHT;// Maximum cell size to fill window height 
+                if (max_size_x < max_size_y){
+                    m_cell_size = max_size_x;
+                }else{
+                    m_cell_size = max_size_y;
+                }
+                const int grid_size_x = GRID_WIDTH*m_cell_size;
+                const int grid_size_y = GRID_HEIGHT*m_cell_size;
+                m_grid_margin.first = window_width/2 - grid_size_x/2;
+                m_grid_margin.second = window_height/2 - grid_size_y/2;
+
                 std::srand(std::time({}));
                 Randomize();
                 m_last_cell = {-1, -1}; // Unvalid cell
@@ -91,15 +109,15 @@ class Grid2D
                     if (m_current_grid[i]){
                         const int line = (GRID_HEIGHT-1) - i/GRID_WIDTH; 
                         const int column = (GRID_WIDTH-1) - i%GRID_WIDTH;
-                        SDL_Rect cell_rect = {column*32, line*32, 32, 32};
+                        SDL_Rect cell_rect = {m_grid_margin.first + column*m_cell_size, m_grid_margin.second + line*m_cell_size, m_cell_size, m_cell_size};
                         SDL_RenderFillRect(window_renderer, &cell_rect);
                     }
                 }
             }
 
             void Set(const MousePosition& mouse){
-                const int column = (GRID_WIDTH-1) - mouse.x/32; // Cell size 
-                const int line = (GRID_HEIGHT-1) - mouse.y/32; // Cell size
+                const int column = (GRID_WIDTH-1) - (mouse.x - m_grid_margin.first) / m_cell_size; 
+                const int line = (GRID_HEIGHT-1) - (mouse.y - m_grid_margin.second) / m_cell_size;
                 if (column == m_last_cell.first && line == m_last_cell.second)
                     return;
                 if (line < 0 || line >= GRID_HEIGHT || column < 0 || column >= GRID_WIDTH)

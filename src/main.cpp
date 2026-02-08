@@ -6,7 +6,7 @@
 #include "time.hpp"
 #include "window.hpp"
 
-#define UPDATE_TIMER 0.1
+#define UPDATE_TIMER 0.5
 
 int main()
 {
@@ -32,7 +32,7 @@ int main()
         }else{
             time.Update();
             timer -= time.m_delta_time;
-            if (timer < 0.0){
+            if (timer <= 0.0){
                 timer = UPDATE_TIMER;
                 gol.Update();
                 result.Update(gol.GetGrid());
@@ -40,7 +40,8 @@ int main()
         }
 
         gol.Draw();
-        result.Draw();
+        float t = timer == UPDATE_TIMER ? 0. : 1.0 - timer/UPDATE_TIMER;
+        result.Draw(t);
         window.UpdateRender();
     }
 

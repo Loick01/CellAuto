@@ -8,19 +8,16 @@
 #include "type.hpp"
 #include "window.hpp"
 
-#define BIRTH 3
-#define UNDERPOPULATION 2
-#define OVERPOPULATION 3
-
+// 2D grid with only 2 states
 class Grid2D
 {
-    private:    
+    protected:    
         std::bitset <GRID_WIDTH*GRID_HEIGHT> m_current_grid;
         std::bitset <GRID_WIDTH*GRID_HEIGHT> m_next_grid;
         Window& m_window;
         SDL_Color m_cell_color;
-        std::pair<int, int> m_last_cell; // Last interacted cell with the mouse
-        std::pair<int, int> m_grid_margin;
+        Grid2DPosition m_last_cell; // Last interacted cell with the mouse
+        PixelPosition m_grid_margin;
         int m_cell_size;
 
         public:
@@ -38,15 +35,14 @@ class Grid2D
                 }
                 const int grid_size_x = GRID_WIDTH*m_cell_size;
                 const int grid_size_y = GRID_HEIGHT*m_cell_size;
-                m_grid_margin.first = window_width/2 - grid_size_x/2;
-                m_grid_margin.second = window_height/2 - grid_size_y/2;
+                m_grid_margin.x = window_width/2 - grid_size_x/2;
+                m_grid_margin.y = window_height/2 - grid_size_y/2;
 
                 std::srand(std::time({}));
-                Randomize();
                 m_last_cell = {-1, -1}; // Unvalid cell
             }
             
-            std::pair<int, int> GetMargin() const { 
+            PixelPosition GetMargin() const { 
                 return m_grid_margin;
             }
 
@@ -101,22 +97,6 @@ class Grid2D
                 return neighbor;
             }
             
-            void Update(){
-                for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                    const unsigned int nr_neighbor = GetNrNeighbor(i);
-                    if (m_current_grid[i]){ // Living cell 
-                        if (nr_neighbor < UNDERPOPULATION || nr_neighbor > OVERPOPULATION)
-                            m_next_grid.reset(i);
-                        else m_next_grid.set(i);
-                    }else{ // Dead cell
-                        if (nr_neighbor == BIRTH)
-                            m_next_grid.set(i);
-                        else m_next_grid.reset(i);
-                    }
-                }
-                m_current_grid = m_next_grid;    
-            }
-            
             void Draw() const{
                 m_window.SetRenderColor(m_cell_color);
                 SDL_Renderer* window_renderer = m_window.GetRenderer();
@@ -124,20 +104,88 @@ class Grid2D
                     if (m_current_grid[i]){
                         const int line = (GRID_HEIGHT-1) - i/GRID_WIDTH; 
                         const int column = (GRID_WIDTH-1) - i%GRID_WIDTH;
-                        SDL_Rect cell_rect = {m_grid_margin.first + column*m_cell_size, m_grid_margin.second + line*m_cell_size, m_cell_size, m_cell_size};
+                        SDL_Rect cell_rect = {m_grid_margin.x + column*m_cell_size, m_grid_margin.y + line*m_cell_size, m_cell_size, m_cell_size};
                         SDL_RenderFillRect(window_renderer, &cell_rect);
                     }
                 }
             }
 
-            void Set(const MousePosition& mouse){
-                const int column = (GRID_WIDTH-1) - (mouse.x - m_grid_margin.first) / m_cell_size; 
-                const int line = (GRID_HEIGHT-1) - (mouse.y - m_grid_margin.second) / m_cell_size;
-                if (column == m_last_cell.first && line == m_last_cell.second)
+            void Set(const PixelPosition& mouse){
+                const int column = (GRID_WIDTH-1) - (mouse.x - m_grid_margin.x) / m_cell_size; 
+                const int line = (GRID_HEIGHT-1) - (mouse.y - m_grid_margin.y) / m_cell_size;
+                if (column == m_last_cell.x && line == m_last_cell.y)
                     return;
                 if (line < 0 || line >= GRID_HEIGHT || column < 0 || column >= GRID_WIDTH)
                     return;
                 m_current_grid.flip(line*GRID_WIDTH+column); 
                 m_last_cell = {column, line};
             }
+
+            virtual void Update() = 0;
+};
+
+// https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+class GameOfLife : public Grid2D 
+{
+    private:
+        const int m_birth, m_underpopulation, m_overpopulation;
+
+    public :
+        GameOfLife(Window& window, const SDL_Color& cell_color, const int birth, const int underpopulation, const int overpopulation):
+        Grid2D(window, cell_color), m_birth(birth), m_underpopulation(underpopulation), m_overpopulation(overpopulation)
+        {
+            Randomize();
+        }
+
+        void Update() override {
+            for (std::size_t i = 0; i < m_current_grid.size(); i++) {
+                const unsigned int nr_neighbor = GetNrNeighbor(i);
+                if (m_current_grid[i]){ // Living cell 
+                    if (nr_neighbor < m_underpopulation || nr_neighbor > m_overpopulation)
+                        m_next_grid.reset(i);
+                    else m_next_grid.set(i);
+                }else{ // Dead cell
+                    if (nr_neighbor == m_birth)
+                        m_next_grid.set(i);
+                    else m_next_grid.reset(i);
+                }
+            }
+            m_current_grid = m_next_grid;    
+        }
+};
+
+// https://en.wikipedia.org/wiki/Langton%27s_ant
+class LangtonAnt : public Grid2D
+{
+    private:
+        Grid2DPosition m_ant_position;
+        unsigned int m_ant_direction;
+        Grid2DPosition m_directions[4];
+        
+        void TurnRight(){
+            m_ant_direction = (m_ant_direction+1)%4;
+        }
+
+        void TurnLeft(){
+            m_ant_direction = (m_ant_direction+3)%4;
+        }
+        
+    public:
+        LangtonAnt(Window& window, const SDL_Color& cell_color, const Grid2DPosition initial_position, const unsigned int initial_direction=3):
+        Grid2D(window, cell_color), m_ant_position(initial_position), m_ant_direction(initial_direction)
+        {
+            m_directions[0] = {0, 1}; m_directions[1] = {1, 0}; m_directions[2] = {0, -1}; m_directions[3] = {-1, 0};
+            Empty();
+        }
+
+        void Update() override {
+            const int index = m_ant_position.y * GRID_WIDTH + m_ant_position.x;
+            if (m_current_grid[index]){
+                TurnRight();
+            }else{
+                TurnLeft();
+            }
+            m_ant_position += m_directions[m_ant_direction]; // Move forward one unit
+            m_current_grid[index].flip();
+        }
 };

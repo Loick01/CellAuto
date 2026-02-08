@@ -5,7 +5,7 @@ KeyboardMouseActionController::KeyboardMouseActionController()
     m_trigger_pause = false;
 }
 
-void KeyboardMouseActionController::GetActions(MousePosition& current_mouse)
+void KeyboardMouseActionController::GetActions(PixelPosition& current_mouse)
 {
    GetKeyboardActions();
    GetMouseActions(current_mouse);
@@ -16,7 +16,7 @@ void KeyboardMouseActionController::GetKeyboardActions()
     m_keyboard_state = SDL_GetKeyboardState(NULL);
 }
 
-void KeyboardMouseActionController::GetMouseActions(MousePosition& current_mouse)
+void KeyboardMouseActionController::GetMouseActions(PixelPosition& current_mouse)
 {
     m_mouse_state = SDL_GetMouseState(&current_mouse.x, &current_mouse.y);
 }
@@ -63,29 +63,29 @@ void EventController::PollAllEvents()
     }
 }
 
-GameOfLifeEventController::GameOfLifeEventController()
+Grid2DEventController::Grid2DEventController()
 {
     m_action_controller = new KeyboardMouseActionController();
     m_is_paused = false;
     m_is_set = false;
 }
 
-MousePosition GameOfLifeEventController::GetMouse() const
+PixelPosition Grid2DEventController::GetMouse() const
 {
     return m_current_mouse;
 }
 
-bool GameOfLifeEventController::GetIsPaused() const
+bool Grid2DEventController::GetIsPaused() const
 {
     return m_is_paused;
 }
 
-bool GameOfLifeEventController::GetIsSet() const
+bool Grid2DEventController::GetIsSet() const
 {
     return m_is_set;
 }
 
-void GameOfLifeEventController::HandleEvents()
+void Grid2DEventController::HandleEvents()
 {
     m_action_controller->GetActions(m_current_mouse);
     if (m_action_controller->IsPauseAction()){

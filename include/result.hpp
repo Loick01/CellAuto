@@ -19,7 +19,7 @@ class TextureResult
         const int m_height;
 
     public:
-        TextureResult(SDL_Renderer* renderer, const std::pair<int, int> grid_margin, const int width, const int height, const int cell_size):
+        TextureResult(SDL_Renderer* renderer, const PixelPosition grid_margin, const int width, const int height, const int cell_size):
         m_window_renderer(renderer), m_width(width), m_height(height)
         {       
             // RGB888 should be enough for now
@@ -27,7 +27,7 @@ class TextureResult
             m_current_texture_buffer = new uint32_t[m_width*m_height];
             m_next_texture_buffer = new uint32_t[m_width*m_height];
             m_frame_texture_buffer = new uint32_t[m_width*m_height];
-            m_dst = {grid_margin.first, grid_margin.second, width*cell_size, m_height*cell_size};
+            m_dst = {grid_margin.x, grid_margin.y, width*cell_size, m_height*cell_size};
             for (unsigned int i = 0 ; i <m_width*m_height ; i++){
                 WriteColorCurrentBuffer({0, 0, 0}, i);
                 WriteColorNextBuffer({0, 0, 0}, i);

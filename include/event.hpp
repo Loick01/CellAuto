@@ -12,7 +12,7 @@ class ActionController
     public:
         virtual bool IsPauseAction() = 0;
         virtual bool IsSetAction() = 0;
-        virtual void GetActions(MousePosition& current_mouse) = 0;
+        virtual void GetActions(PixelPosition& current_mouse) = 0;
 };
 
 class KeyboardMouseActionController : public ActionController
@@ -26,9 +26,9 @@ class KeyboardMouseActionController : public ActionController
         KeyboardMouseActionController(); 
         bool IsPauseAction() override;
         bool IsSetAction() override;
-        void GetActions(MousePosition& current_mouse) override;
+        void GetActions(PixelPosition& current_mouse) override;
         void GetKeyboardActions();
-        void GetMouseActions(MousePosition& current_mouse);
+        void GetMouseActions(PixelPosition& current_mouse);
 };
 
 class EventController
@@ -42,17 +42,17 @@ class EventController
         void PollAllEvents();
 };
 
-class GameOfLifeEventController: public EventController
+class Grid2DEventController: public EventController
 {
     private:
         ActionController* m_action_controller;
-        MousePosition m_current_mouse;
+        PixelPosition m_current_mouse;
         bool m_is_paused;
         bool m_is_set;
 
     public:
-        GameOfLifeEventController();
-        MousePosition GetMouse() const;
+        Grid2DEventController();
+        PixelPosition GetMouse() const;
         bool GetIsPaused() const;
         bool GetIsSet() const;
         void HandleEvents() override;

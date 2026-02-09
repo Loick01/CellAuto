@@ -14,6 +14,7 @@ class Grid2D
     protected:    
         std::bitset <GRID_WIDTH*GRID_HEIGHT> m_current_grid;
         std::bitset <GRID_WIDTH*GRID_HEIGHT> m_next_grid;
+        std::vector<unsigned char> m_age_grid;
         Window& m_window;
         SDL_Color m_cell_color;
         Grid2DPosition m_last_cell; // Last interacted cell with the mouse
@@ -22,7 +23,7 @@ class Grid2D
 
         public:
             Grid2D(Window& window, const SDL_Color& cell_color) : 
-            m_window(window), m_cell_color(cell_color)
+            m_window(window), m_cell_color(cell_color), m_age_grid(GRID_WIDTH*GRID_HEIGHT, 0)
             {
                 const int window_width = window.GetWidth();
                 const int window_height = window.GetHeight();
@@ -35,8 +36,7 @@ class Grid2D
                 }
                 const int grid_size_x = GRID_WIDTH*m_cell_size;
                 const int grid_size_y = GRID_HEIGHT*m_cell_size;
-                // m_grid_margin.x = window_width/2 - grid_size_x/2;
-                m_grid_margin.x = 0;
+                m_grid_margin.x = window_width/4 - grid_size_x/2;
                 m_grid_margin.y = window_height/2 - grid_size_y/2;
 
                 std::srand(std::time({}));
@@ -65,16 +65,19 @@ class Grid2D
             
             void Empty(){ // Set each bit to 0
                 m_current_grid.reset();
+                std::fill(m_age_grid.begin(), m_age_grid.end(), 0);
             }
 
             void Fill(){ // Set each bit to 1
                 m_current_grid.set();
+                std::fill(m_age_grid.begin(), m_age_grid.end(), 1);
             }
 
             void Randomize(){
                 for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                    if (rand()%2) m_current_grid.set(i); 
+                    if (rand()%2) m_current_grid.set(i);
                     else m_current_grid.reset(i);
+                    m_age_grid[m_age_grid.size() - i - 1] = m_current_grid[i];
                 } 
             }
 
@@ -118,10 +121,16 @@ class Grid2D
                     return;
                 if (line < 0 || line >= GRID_HEIGHT || column < 0 || column >= GRID_WIDTH)
                     return;
-                m_current_grid.flip(line*GRID_WIDTH+column); 
+                const int index = line*GRID_WIDTH+column;
+                m_current_grid.flip(index); 
+                m_age_grid[m_age_grid.size() - index - 1] = m_current_grid[index];
                 m_last_cell = {column, line};
             }
 
+            std::vector<unsigned char> GetAgeGrid() const{
+                return m_age_grid;
+            }
+            
             virtual void Update() = 0;
 };
 
@@ -141,14 +150,21 @@ class GameOfLife : public Grid2D
         void Update() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 const int nr_neighbor = GetNrNeighbor(i);
+                const int vector_index = m_age_grid.size() - i - 1;
                 if (m_current_grid[i]){ // Living cell 
-                    if (nr_neighbor < m_underpopulation || nr_neighbor > m_overpopulation)
+                    if (nr_neighbor < m_underpopulation || nr_neighbor > m_overpopulation){
                         m_next_grid.reset(i);
-                    else m_next_grid.set(i);
-                }else{ // Dead cell
-                    if (nr_neighbor == m_birth)
+                        m_age_grid[vector_index] = 0;
+                    }else{
                         m_next_grid.set(i);
-                    else m_next_grid.reset(i);
+                        m_age_grid[vector_index] += 1;
+                    }
+                }else{ // Dead cell
+                    if (nr_neighbor == m_birth){
+                        m_next_grid.set(i);
+                        m_age_grid[vector_index] = 1;
+                    }
+                    else m_next_grid.reset(i); // Don't need to set cell age to 0 
                 }
             }
             m_current_grid = m_next_grid;    

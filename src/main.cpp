@@ -7,7 +7,7 @@
 #include "time.hpp"
 #include "window.hpp"
 
-#define UPDATE_TIMER 0.1
+#define UPDATE_TIMER 0.3
 
 int main()
 {

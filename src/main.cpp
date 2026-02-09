@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 #include "event.hpp"
 #include "grid.hpp"
@@ -6,7 +7,7 @@
 #include "time.hpp"
 #include "window.hpp"
 
-#define UPDATE_TIMER 0.001
+#define UPDATE_TIMER 0.1
 
 int main()
 {
@@ -14,11 +15,11 @@ int main()
     
     Grid2DEventController eventController;
     
-    // GameOfLife gol(window, {25, 240, 50}, 3, 2, 3);
-    LangtonAnt la(window, {25, 240, 50}, {GRID_WIDTH/2, GRID_HEIGHT/2});
+    std::unique_ptr<Grid2D> ca = std::make_unique<GameOfLife>(window, SDL_Color{25, 240, 50}, 3, 2, 3);
+    // std::unique_ptr<Grid2D> ca = std::make_unique<LangtonAnt>(window, SDL_Color{25, 240, 50}, Grid2DPosition{GRID_WIDTH/2, GRID_HEIGHT/2});
 
-    // TextureResult result(window.GetRenderer(), gol.GetMargin(), gol.GetWidth(), gol.GetHeight(), gol.GetCellSize());
-    // result.Update(gol.GetGrid());
+    TextureResult result(window, ca->GetMargin(), ca->GetWidth(), ca->GetHeight(), ca->GetCellSize());
+    result.Update(*ca);
 
     bool gameloop = true;
     Time time;
@@ -32,21 +33,21 @@ int main()
 
         if (eventController.GetIsPaused()){
             if (eventController.GetIsSet()){
-                la.Set(eventController.GetMouse());
+                ca->Set(eventController.GetMouse());
             }
         }else{
             time.Update();
             timer -= time.m_delta_time;
             if (timer <= 0.0){
                 timer = UPDATE_TIMER;
-                la.Update();
-                // result.Update(gol.GetGrid());
+                ca->Update();
+                result.Update(*ca);
             }
         }
 
-        la.Draw();
+        ca->Draw();
         float t = timer == UPDATE_TIMER ? 0. : 1.0 - timer/UPDATE_TIMER;
-        // result.Draw(t);
+        result.Draw(t);
         window.UpdateRender();
     }
 

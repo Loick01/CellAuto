@@ -19,15 +19,15 @@ class TextureResult
         const int m_height;
 
     public:
-        TextureResult(SDL_Renderer* renderer, const PixelPosition grid_margin, const int width, const int height, const int cell_size):
-        m_window_renderer(renderer), m_width(width), m_height(height)
+        TextureResult(const Window& window, const PixelPosition grid_margin, const int width, const int height, const int cell_size):
+        m_window_renderer(window.GetRenderer()), m_width(width), m_height(height)
         {       
             // RGB888 should be enough for now
             m_texture = SDL_CreateTexture(m_window_renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, m_width, m_height);
             m_current_texture_buffer = new uint32_t[m_width*m_height];
             m_next_texture_buffer = new uint32_t[m_width*m_height];
             m_frame_texture_buffer = new uint32_t[m_width*m_height];
-            m_dst = {grid_margin.x, grid_margin.y, width*cell_size, m_height*cell_size};
+            m_dst = {grid_margin.x+window.GetWidth()/2, grid_margin.y, width*cell_size, m_height*cell_size};
             for (unsigned int i = 0 ; i <m_width*m_height ; i++){
                 WriteColorCurrentBuffer({0, 0, 0}, i);
                 WriteColorNextBuffer({0, 0, 0}, i);
@@ -76,27 +76,46 @@ class TextureResult
             SDL_UpdateTexture(m_texture , NULL, m_frame_texture_buffer, m_width*sizeof(uint32_t));
         }
 
-        void Update(const std::bitset<GRID_WIDTH*GRID_HEIGHT>& grid){
+        /*
+        void Update(const Grid2D& grid){
 
+            const std::bitset<GRID_WIDTH*GRID_HEIGHT>& bitset = grid.GetGrid();
             std::swap(m_current_texture_buffer, m_next_texture_buffer);
 
             for (unsigned int x = 0 ; x < m_width ; x++){
                 
                 unsigned char nr_alive_cell_column = 0;
                 for (std::size_t i = 0; i < m_height; i++) {
-                    if (grid[i * m_width + x]) nr_alive_cell_column++;
+                    if (bitset[i * m_width + x]) nr_alive_cell_column++;
                 }
 
                 for (unsigned int y = 0 ; y < m_height ; y++){
                     unsigned char nr_alive_cell_line =0;
                     for (int j = 0 ; j < m_width ; j++){
-                        if (grid[y * m_width + j]) nr_alive_cell_line++;
+                        if (bitset[y * m_width + j]) nr_alive_cell_line++;
                     }
                     const int index = (m_height - 1 - y) * m_width + (m_width - 1 - x);
                     // const unsigned char r = nr_alive_cell_line*2+nr_alive_cell_column*2;
                     // WriteColorNextBuffer({r, r, r}, index);
-                    WriteColorNextBuffer({static_cast<Uint8>(nr_alive_cell_line*4), static_cast<Uint8>(nr_alive_cell_column*4), 0}, index);
+                    WriteColorNextBuffer({static_cast<Uint8>(nr_alive_cell_column*4), static_cast<Uint8>(nr_alive_cell_line*4), 0}, index);
                 }
             }
         }
+        */
+    
+        void Update(const Grid2D& grid){
+
+            std::swap(m_current_texture_buffer, m_next_texture_buffer);
+
+            for (unsigned int x = 0 ; x < m_width ; x++){
+                for (unsigned int y = 0 ; y < m_height ; y++){
+                    const int indexBuffer = (m_height - 1 - y) * m_width + (m_width - 1 - x);
+                    const int indexSrc = y * m_width + x;
+                    const unsigned char alive_neighbor = std::max(0, grid.GetNrNeighbor(indexSrc, 3));
+                    float t = alive_neighbor/32.;
+                    SDL_Color r = {static_cast<unsigned char>(t*255), 0, static_cast<unsigned char>((1.-t)*255)};
+                    WriteColorNextBuffer(r, indexBuffer);
+                }
+            }
+        } 
 };

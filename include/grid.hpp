@@ -26,8 +26,8 @@ class Grid2D
             {
                 const int window_width = window.GetWidth();
                 const int window_height = window.GetHeight();
-                const int max_size_x = window_width/GRID_WIDTH; // Maximum cell size to fill window width
-                const int max_size_y = window_height/GRID_HEIGHT;// Maximum cell size to fill window height 
+                const int max_size_x = window_width/GRID_WIDTH/2; // Maximum cell size to fill half window width
+                const int max_size_y = window_height/GRID_HEIGHT; // Maximum cell size to fill window height 
                 if (max_size_x < max_size_y){
                     m_cell_size = max_size_x;
                 }else{
@@ -35,7 +35,8 @@ class Grid2D
                 }
                 const int grid_size_x = GRID_WIDTH*m_cell_size;
                 const int grid_size_y = GRID_HEIGHT*m_cell_size;
-                m_grid_margin.x = window_width/2 - grid_size_x/2;
+                // m_grid_margin.x = window_width/2 - grid_size_x/2;
+                m_grid_margin.x = 0;
                 m_grid_margin.y = window_height/2 - grid_size_y/2;
 
                 std::srand(std::time({}));
@@ -77,13 +78,13 @@ class Grid2D
                 } 
             }
 
-            unsigned int GetNrNeighbor(const size_t cell_index) const {
+            int GetNrNeighbor(const size_t cell_index, const int range=1) const {
                 unsigned int neighbor = 0;
                 const int cell_line = cell_index/GRID_WIDTH; 
                 const int cell_column = cell_index%GRID_WIDTH;
                 
-                for (int x = -1 ; x <= 1 ; x++){
-                    for (int y = -1 ; y <= 1 ; y++){
+                for (int x = -range ; x <= range ; x++){
+                    for (int y = -range ; y <= range ; y++){
                         if (x == 0 && y == 0)
                             continue;
 
@@ -139,7 +140,7 @@ class GameOfLife : public Grid2D
 
         void Update() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                const unsigned int nr_neighbor = GetNrNeighbor(i);
+                const int nr_neighbor = GetNrNeighbor(i);
                 if (m_current_grid[i]){ // Living cell 
                     if (nr_neighbor < m_underpopulation || nr_neighbor > m_overpopulation)
                         m_next_grid.reset(i);

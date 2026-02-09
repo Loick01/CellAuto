@@ -1,7 +1,7 @@
 #pragma once 
 
-#define GRID_WIDTH 64
-#define GRID_HEIGHT 64
+#define GRID_WIDTH 128
+#define GRID_HEIGHT 128
 
 struct PixelPosition
 {
@@ -18,3 +18,7 @@ struct Grid2DPosition
         return *this;
     }
 };
+
+inline float lerp(float a, float b, float t){
+    return a+(b-a)*t;
+}

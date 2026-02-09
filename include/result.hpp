@@ -9,6 +9,7 @@
 class TextureResult
 {
     private:
+        std::vector<float> m_density;
         SDL_Texture* m_texture;
         SDL_Renderer* m_window_renderer;
         SDL_Rect m_dst;
@@ -32,6 +33,7 @@ class TextureResult
                 WriteColorCurrentBuffer({0, 0, 0}, i);
                 WriteColorNextBuffer({0, 0, 0}, i);
             }
+            m_density = std::vector<float>(m_width*m_height, 0.f);
         }
 
         ~TextureResult(){
@@ -116,13 +118,31 @@ class TextureResult
                 for (unsigned int y = 0 ; y < m_height ; y++){
                     const int indexBuffer = (m_height - 1 - y) * m_width + (m_width - 1 - x);
                     const int indexSrc = y * m_width + x;
-                    const unsigned char alive_neighbor = std::max(0, grid.GetNrNeighbor(indexSrc, 2));
-                    float t = alive_neighbor/19.;
-                    SDL_Color r = {static_cast<unsigned char>(t*255), 0, static_cast<unsigned char>((1.-t)*255)};
-                    WriteColorNextBuffer(r, indexBuffer);
+                    const unsigned char alive_neighbor = std::max(0, grid.GetNrNeighbor(indexSrc, 2)); // [0, 8]
+                    
+                    m_density[indexBuffer] = 0.6f * m_density[indexBuffer] + 0.4f *  alive_neighbor / 8.f;
+                    SDL_Color c0 = {0, 0, 0}; // Low density
+                    SDL_Color c1 = {230, 120, 50}; // High density
+                    float t = m_density[indexBuffer];
+                    float r = c0.r + t * (c1.r - c0.r);
+                    float g = c0.g + t * (c1.g - c0.g);
+                    float b = c0.b + t * (c1.b - c0.b);
+                    SDL_Color c = {(Uint8)r,(Uint8)g,(Uint8)b};
+                    WriteColorNextBuffer(c, indexBuffer);
                 }
             }
-        } */
+
+            // for (unsigned int x = 0 ; x < m_width ; x++){
+            //     for (unsigned int y = 0 ; y < m_height ; y++){
+            //         const int indexBuffer = (m_height - 1 - y) * m_width + (m_width - 1 - x);
+            //         const int indexSrc = y * m_width + x;
+            //         const unsigned char alive_neighbor = std::max(0, grid.GetNrNeighbor(indexSrc, 2));
+            //         float t = alive_neighbor/24.;
+            //         SDL_Color r = {static_cast<unsigned char>(t*255), 0, static_cast<unsigned char>((1.-t)*255)};
+            //         WriteColorNextBuffer(r, indexBuffer);
+            //     }
+            // }
+        }*/
 
         void Update(const Grid2D& grid){
             
@@ -133,7 +153,23 @@ class TextureResult
                 const unsigned char age = age_grid[i];
                 float s = sin(age/4.)*0.5f+0.5f; // [0,1]
                 float c = cos(age/4.)*0.5f+0.5f; // [0,1]
-                WriteColorNextBuffer(SDL_Color{s*255,c*255,s*c*255},i);
+                WriteColorNextBuffer(SDL_Color{(Uint8)(s*255),(Uint8)(c*255),(Uint8)(s*c*255)},i);
             }
+
+            // for (unsigned int i = 0 ; i < age_grid.size() ; i++){
+            //     const unsigned char age = age_grid[i];
+
+            //     SDL_Color c1 = {20, 10, 5, 255};
+            //     SDL_Color c2 = {180, 110, 40, 255};
+            //     SDL_Color c3 = {240, 230, 200, 255};
+
+            //     float t = sin(age/12.0f)*0.5f+0.5f;
+
+            //     float r = lerp(lerp(c1.r, c2.r, t), c3.r, t*t);
+            //     float g = lerp(lerp(c1.g, c2.g, t), c3.g, t*t);
+            //     float b = lerp(lerp(c1.b, c2.b, t), c3.b, t*t);
+
+            //     WriteColorNextBuffer(SDL_Color{(Uint8)r, (Uint8)g, (Uint8)b},i);
+            // }
         }
 };

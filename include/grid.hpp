@@ -65,11 +65,13 @@ class Grid2D
             
             void Empty(){ // Set each bit to 0
                 m_current_grid.reset();
+                m_next_grid.reset();
                 std::fill(m_age_grid.begin(), m_age_grid.end(), 0);
             }
 
             void Fill(){ // Set each bit to 1
                 m_current_grid.set();
+                m_next_grid.set();
                 std::fill(m_age_grid.begin(), m_age_grid.end(), 1);
             }
 
@@ -154,7 +156,7 @@ class GameOfLife : public Grid2D
                 if (m_current_grid[i]){ // Living cell 
                     if (nr_neighbor < m_underpopulation || nr_neighbor > m_overpopulation){
                         m_next_grid.reset(i);
-                        m_age_grid[vector_index] = 0;
+                        //m_age_grid[vector_index] = 0;
                     }else{
                         m_next_grid.set(i);
                         m_age_grid[vector_index] += 1;
@@ -162,7 +164,7 @@ class GameOfLife : public Grid2D
                 }else{ // Dead cell
                     if (nr_neighbor == m_birth){
                         m_next_grid.set(i);
-                        m_age_grid[vector_index] = 1;
+                        m_age_grid[vector_index] += 1;
                     }
                     else m_next_grid.reset(i); // Don't need to set cell age to 0 
                 }
@@ -175,34 +177,41 @@ class GameOfLife : public Grid2D
 class LangtonAnt : public Grid2D
 {
     private:
-        Grid2DPosition m_ant_position;
-        unsigned int m_ant_direction;
+        std::vector<Grid2DPosition> m_ant_positions;
+        std::vector<unsigned int> m_ant_directions;
         Grid2DPosition m_directions[4];
         
-        void TurnRight(){
-            m_ant_direction = (m_ant_direction+1)%4;
+        void TurnRight(const unsigned int ant_index){
+            m_ant_directions[ant_index] = (m_ant_directions[ant_index]+1)%4;
         }
 
-        void TurnLeft(){
-            m_ant_direction = (m_ant_direction+3)%4;
+        void TurnLeft(const unsigned int ant_index){
+            m_ant_directions[ant_index] = (m_ant_directions[ant_index]+3)%4;
         }
         
     public:
-        LangtonAnt(Window& window, const SDL_Color& cell_color, const Grid2DPosition initial_position, const unsigned int initial_direction=3):
-        Grid2D(window, cell_color), m_ant_position(initial_position), m_ant_direction(initial_direction)
+        LangtonAnt(Window& window, const SDL_Color& cell_color, const Grid2DPosition initial_position, const unsigned int nr_ant=1):
+        Grid2D(window, cell_color), m_ant_positions(nr_ant, initial_position)
         {
             m_directions[0] = {0, 1}; m_directions[1] = {1, 0}; m_directions[2] = {0, -1}; m_directions[3] = {-1, 0};
+            for (unsigned int i = 0 ; i < nr_ant ; i++)
+                m_ant_directions.push_back(i);
             Empty();
         }
 
         void Update() override {
-            const int index = m_ant_position.y * GRID_WIDTH + m_ant_position.x;
-            if (m_current_grid[index]){
-                TurnRight();
-            }else{
-                TurnLeft();
+            for (unsigned int i = 0 ; i < m_ant_positions.size() ; i++){
+                Grid2DPosition& ant_position = m_ant_positions[i];
+                const int index = ant_position.y * GRID_WIDTH + ant_position.x;
+                const int vector_index = m_age_grid.size() - index - 1;
+                if (m_current_grid[index]){
+                    TurnRight(i);
+                }else{
+                    TurnLeft(i);
+                }
+                ant_position += m_directions[m_ant_directions[i]]; // Move forward one unit
+                m_age_grid[vector_index]++;
+                m_current_grid[index].flip(); // Or m_next_grid
             }
-            m_ant_position += m_directions[m_ant_direction]; // Move forward one unit
-            m_current_grid[index].flip();
         }
 };

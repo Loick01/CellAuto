@@ -7,16 +7,16 @@
 #include "time.hpp"
 #include "window.hpp"
 
-#define UPDATE_TIMER 0.3
+#define UPDATE_TIMER 0.001
 
 int main()
 {
-    Window window("GameOfLife", {50,50,50});
+    Window window("CellAuto", {50,50,50});
     
     Grid2DEventController eventController;
     
-    std::unique_ptr<Grid2D> ca = std::make_unique<GameOfLife>(window, SDL_Color{25, 240, 50}, 3, 2, 3);
-    // std::unique_ptr<Grid2D> ca = std::make_unique<LangtonAnt>(window, SDL_Color{25, 240, 50}, Grid2DPosition{GRID_WIDTH/2, GRID_HEIGHT/2});
+    //std::unique_ptr<Grid2D> ca = std::make_unique<GameOfLife>(window, SDL_Color{25, 240, 50}, 3, 2, 3);
+    std::unique_ptr<Grid2D> ca = std::make_unique<LangtonAnt>(window, SDL_Color{25, 240, 50}, Grid2DPosition{GRID_WIDTH/2, GRID_HEIGHT/2}, 1);
 
     TextureResult result(window, ca->GetMargin(), ca->GetWidth(), ca->GetHeight(), ca->GetCellSize());
     result.Update(*ca);

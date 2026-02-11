@@ -1,9 +1,9 @@
 #pragma once 
 
-#include <array>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <vector>
 
 #include "type.hpp"
 #include "window.hpp"
@@ -15,12 +15,14 @@ class Grid
         SDL_Color m_cell_color;
         int m_cell_size;
         PixelPosition m_grid_margin;
+        Grid2DPosition m_last_cell; // Last interacted cell with the mouse
+
         Grid(Window& window, const SDL_Color& cell_color) :
         m_window(window), m_cell_color(cell_color)
         {
             const int window_width = window.GetWidth();
             const int window_height = window.GetHeight();
-            const int max_size_x = window_width/GRID_WIDTH/2; // Maximum cell size to fill half window width
+            const int max_size_x = window_width/GRID_WIDTH; // Maximum cell size to fill half window width
             const int max_size_y = window_height/GRID_HEIGHT; // Maximum cell size to fill window height 
             if (max_size_x < max_size_y) 
                 m_cell_size = max_size_x;
@@ -40,6 +42,21 @@ class Grid
             return m_cell_size;
         }
 
+        Grid2DPosition GetGridPositionFromMouse(const PixelPosition& mouse){
+            const int column = (mouse.x - m_grid_margin.x) / m_cell_size; 
+            const int line = (mouse.y - m_grid_margin.y) / m_cell_size;
+            return Grid2DPosition{column, line};
+        }
+
+        bool IsGridPositionValid(const Grid2DPosition& position){
+            if (position.x == m_last_cell.x && position.y == m_last_cell.y)
+                return false;
+            if (position.y < 0 || position.y >= GRID_HEIGHT || position.y < 0 || position.y >= GRID_WIDTH)
+                return false;
+            m_last_cell = Grid2DPosition{position.x, position.y};
+            return true;
+        }
+
         public:
             virtual void Draw() const = 0;
             virtual void Update() = 0;
@@ -51,19 +68,18 @@ class Grid
 class Grid1D : public Grid 
 {
     protected: 
-        std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> m_grid;
+        std::vector<uint8_t> m_grid;
         const uint8_t m_rule;
         size_t m_generation;
 
     public:
         Grid1D(Window& window, const SDL_Color& cell_color, const uint8_t rule):
         Grid(window, cell_color), m_generation(0), m_rule(rule) {
+            m_grid.resize(GRID_WIDTH*GRID_HEIGHT, 0);
             Initial();
         }
 
         void Initial() {
-            for (size_t i = 0 ; i < GRID_WIDTH ; i++)
-                m_grid[m_generation * GRID_WIDTH + i] = 0;
             m_grid[m_generation * GRID_WIDTH + GRID_WIDTH / 2] = 1;
         }
         
@@ -90,6 +106,8 @@ class Grid1D : public Grid
         }
 
         void Update() override {
+            if (m_generation==GRID_HEIGHT-1)
+                return;
             for (std::size_t i = 0; i < GRID_WIDTH; i++) {
                 const uint8_t n = GetNeighbors(i);
                 uint8_t r = m_rule & (1 << n);
@@ -99,27 +117,34 @@ class Grid1D : public Grid
         }
 
         void Set(const PixelPosition& mouse) override {
-            return; // Can't be modified
+            Grid2DPosition position = GetGridPositionFromMouse(mouse);
+            if (IsGridPositionValid(position)){
+                const int index = position.y*GRID_WIDTH+position.x;
+                m_grid[index] ^= 1; // 2 states only
+                m_generation = position.y; // Evolution will resume from the modified line
+            }
         }
 };
 
 class Grid2D : public Grid
 {
     protected:    
-        std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> m_current_grid;
-        std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> m_next_grid;
-        std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> m_age_grid;
-        Grid2DPosition m_last_cell; // Last interacted cell with the mouse
+        std::vector<uint8_t> m_current_grid;
+        std::vector<uint8_t> m_next_grid;
+        std::vector<uint8_t> m_age_grid;
 
         public:
             Grid2D(Window& window, const SDL_Color& cell_color) : 
-            Grid(window, cell_color)/*, m_age_grid(GRID_WIDTH*GRID_HEIGHT, 0)*/
+            Grid(window, cell_color)
             {
+                m_current_grid.resize(GRID_WIDTH*GRID_HEIGHT, 0);
+                m_next_grid.resize(GRID_WIDTH*GRID_HEIGHT, 0);
+                m_age_grid.resize(GRID_WIDTH*GRID_HEIGHT, 0);
                 std::srand(std::time({}));
                 m_last_cell = {-1, -1}; // Unvalid cell
             }
 
-            std::array<uint8_t ,GRID_WIDTH*GRID_HEIGHT> GetGrid() const {
+            std::vector<uint8_t> GetGrid() const {
                 return m_current_grid;
             }
 
@@ -132,13 +157,13 @@ class Grid2D : public Grid
             }
             
             void Empty(){ // Set each cell state to 0
-                m_current_grid.fill(0);
-                m_age_grid.fill(0);
+                std::fill(m_current_grid.begin(), m_current_grid.end(), 0);
+                std::fill(m_age_grid.begin(), m_age_grid.end(), 0);
             }
 
             void Fill(){ // Set each cell state to 1
-                m_current_grid.fill(1);
-                m_age_grid.fill(1);
+                std::fill(m_current_grid.begin(), m_current_grid.end(), 1);
+                std::fill(m_age_grid.begin(), m_age_grid.end(), 1);
             }
 
             void Randomize(){
@@ -182,19 +207,15 @@ class Grid2D : public Grid
             }
 
             void Set(const PixelPosition& mouse) override {
-                const int column = (mouse.x - m_grid_margin.x) / m_cell_size; 
-                const int line = (mouse.y - m_grid_margin.y) / m_cell_size;
-                if (column == m_last_cell.x && line == m_last_cell.y)
-                    return;
-                if (line < 0 || line >= GRID_HEIGHT || column < 0 || column >= GRID_WIDTH)
-                    return;
-                const int index = line*GRID_WIDTH+column;
-                m_current_grid[index] ^= 1; // 2 states only
-                m_age_grid[index] = m_current_grid[index]; // 2 states only
-                m_last_cell = {column, line};
+                Grid2DPosition position = GetGridPositionFromMouse(mouse);
+                if (IsGridPositionValid(position)){
+                    const int index = position.y*GRID_WIDTH+position.x;
+                    m_current_grid[index] ^= 1; // 2 states only
+                    m_age_grid[index] = m_current_grid[index]; // 2 states only
+                }
             }
 
-            std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> GetAgeGrid() const{
+            std::vector<uint8_t> GetAgeGrid() const{
                 return m_age_grid;
             }
 };

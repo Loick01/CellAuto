@@ -7,7 +7,7 @@
 #include "time.hpp"
 #include "window.hpp"
 
-#define UPDATE_TIMER 0.1
+#define UPDATE_TIMER 0.05
 
 int main()
 {
@@ -15,9 +15,9 @@ int main()
     
     Grid2DEventController eventController;
     
-    //std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, SDL_Color{25, 240, 50}, 3, 1, 3);
+    //std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, SDL_Color{25, 240, 50}, 3, 2, 3);
     //std::unique_ptr<Grid> ca = std::make_unique<LangtonAnt>(window, SDL_Color{25, 240, 50}, Grid2DPosition{GRID_WIDTH/2, GRID_HEIGHT/2}, 1);
-    std::unique_ptr<Grid> ca = std::make_unique<Grid1D>(window, SDL_Color{25, 240, 50}, 126);
+    std::unique_ptr<Grid> ca = std::make_unique<Grid1D>(window, SDL_Color{25, 240, 50}, 150);
 
     //TextureResult result(window, ca->GetMargin(), ca->GetWidth(), ca->GetHeight(), ca->GetCellSize());
     //result.Update(*ca);

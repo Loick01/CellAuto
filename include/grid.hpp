@@ -1,6 +1,6 @@
 #pragma once 
 
-#include <bitset>
+#include <array>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -8,46 +8,118 @@
 #include "type.hpp"
 #include "window.hpp"
 
-// 2D grid with only 2 states
-class Grid2D
+class Grid
 {
-    protected:    
-        std::bitset <GRID_WIDTH*GRID_HEIGHT> m_current_grid;
-        std::bitset <GRID_WIDTH*GRID_HEIGHT> m_next_grid;
-        std::vector<unsigned char> m_age_grid;
+    protected: 
         Window& m_window;
         SDL_Color m_cell_color;
-        Grid2DPosition m_last_cell; // Last interacted cell with the mouse
-        PixelPosition m_grid_margin;
         int m_cell_size;
+        PixelPosition m_grid_margin;
+        Grid(Window& window, const SDL_Color& cell_color) :
+        m_window(window), m_cell_color(cell_color)
+        {
+            const int window_width = window.GetWidth();
+            const int window_height = window.GetHeight();
+            const int max_size_x = window_width/GRID_WIDTH/2; // Maximum cell size to fill half window width
+            const int max_size_y = window_height/GRID_HEIGHT; // Maximum cell size to fill window height 
+            if (max_size_x < max_size_y) 
+                m_cell_size = max_size_x;
+            else 
+                m_cell_size = max_size_y;
+            const int grid_size_x = GRID_WIDTH*m_cell_size;
+            const int grid_size_y = GRID_HEIGHT*m_cell_size;
+            m_grid_margin.x = window_width/2 - grid_size_x/2;
+            m_grid_margin.y = window_height/2 - grid_size_y/2;
+        }
+
+        PixelPosition GetMargin() const { 
+            return m_grid_margin;
+        }
+
+        int GetCellSize() const {
+            return m_cell_size;
+        }
+
+        public:
+            virtual void Draw() const = 0;
+            virtual void Update() = 0;
+            virtual void Set(const PixelPosition& mouse) = 0;
+};
+
+// One dimensional grid, drawed by stacking them in a 2D grid
+// https://en.wikipedia.org/wiki/Elementary_cellular_automaton
+class Grid1D : public Grid 
+{
+    protected: 
+        std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> m_grid;
+        const uint8_t m_rule;
+        size_t m_generation;
+
+    public:
+        Grid1D(Window& window, const SDL_Color& cell_color, const uint8_t rule):
+        Grid(window, cell_color), m_generation(0), m_rule(rule) {
+            Initial();
+        }
+
+        void Initial() {
+            for (size_t i = 0 ; i < GRID_WIDTH ; i++)
+                m_grid[m_generation * GRID_WIDTH + i] = 0;
+            m_grid[m_generation * GRID_WIDTH + GRID_WIDTH / 2] = 1;
+        }
+        
+        uint8_t GetNeighbors(const size_t cell_index) const{
+            size_t rightIndex = (cell_index+1)%GRID_WIDTH;
+            size_t leftIndex = (cell_index+GRID_WIDTH-1)%GRID_WIDTH;
+            uint8_t right = m_grid[m_generation * GRID_WIDTH + rightIndex];
+            uint8_t current = m_grid[m_generation * GRID_WIDTH + cell_index];
+            uint8_t left = m_grid[m_generation * GRID_WIDTH + leftIndex];
+            return right << 2 | current << 1 | left;
+        }
+
+        void Draw() const override {
+            m_window.SetRenderColor(m_cell_color);
+            SDL_Renderer* window_renderer = m_window.GetRenderer();
+            for (std::size_t i = 0; i < m_grid.size(); i++) {
+                if (m_grid[i]){
+                    const int line = i/GRID_WIDTH; 
+                    const int column = i%GRID_WIDTH;
+                    SDL_Rect cell_rect = {m_grid_margin.x + column*m_cell_size, m_grid_margin.y + line*m_cell_size, m_cell_size, m_cell_size};
+                    SDL_RenderFillRect(window_renderer, &cell_rect);
+                }
+            }
+        }
+
+        void Update() override {
+            for (std::size_t i = 0; i < GRID_WIDTH; i++) {
+                const uint8_t n = GetNeighbors(i);
+                uint8_t r = m_rule & (1 << n);
+                m_grid[(m_generation+1) * GRID_WIDTH + i] = (r != 0) ? 1 : 0;
+            }
+            ++m_generation;
+        }
+
+        void Set(const PixelPosition& mouse) override {
+            return; // Can't be modified
+        }
+};
+
+class Grid2D : public Grid
+{
+    protected:    
+        std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> m_current_grid;
+        std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> m_next_grid;
+        std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> m_age_grid;
+        Grid2DPosition m_last_cell; // Last interacted cell with the mouse
 
         public:
             Grid2D(Window& window, const SDL_Color& cell_color) : 
-            m_window(window), m_cell_color(cell_color), m_age_grid(GRID_WIDTH*GRID_HEIGHT, 0)
+            Grid(window, cell_color)/*, m_age_grid(GRID_WIDTH*GRID_HEIGHT, 0)*/
             {
-                const int window_width = window.GetWidth();
-                const int window_height = window.GetHeight();
-                const int max_size_x = window_width/GRID_WIDTH/2; // Maximum cell size to fill half window width
-                const int max_size_y = window_height/GRID_HEIGHT; // Maximum cell size to fill window height 
-                if (max_size_x < max_size_y){
-                    m_cell_size = max_size_x;
-                }else{
-                    m_cell_size = max_size_y;
-                }
-                const int grid_size_x = GRID_WIDTH*m_cell_size;
-                const int grid_size_y = GRID_HEIGHT*m_cell_size;
-                m_grid_margin.x = window_width/4 - grid_size_x/2;
-                m_grid_margin.y = window_height/2 - grid_size_y/2;
-
                 std::srand(std::time({}));
                 m_last_cell = {-1, -1}; // Unvalid cell
             }
-            
-            PixelPosition GetMargin() const { 
-                return m_grid_margin;
-            }
 
-            std::bitset<GRID_WIDTH*GRID_HEIGHT> GetGrid() const {
+            std::array<uint8_t ,GRID_WIDTH*GRID_HEIGHT> GetGrid() const {
                 return m_current_grid;
             }
 
@@ -58,32 +130,25 @@ class Grid2D
             int GetHeight() const {
                 return GRID_HEIGHT;
             }
-
-            int GetCellSize() const {
-                return m_cell_size;
-            }
             
-            void Empty(){ // Set each bit to 0
-                m_current_grid.reset();
-                m_next_grid.reset();
-                std::fill(m_age_grid.begin(), m_age_grid.end(), 0);
+            void Empty(){ // Set each cell state to 0
+                m_current_grid.fill(0);
+                m_age_grid.fill(0);
             }
 
-            void Fill(){ // Set each bit to 1
-                m_current_grid.set();
-                m_next_grid.set();
-                std::fill(m_age_grid.begin(), m_age_grid.end(), 1);
+            void Fill(){ // Set each cell state to 1
+                m_current_grid.fill(1);
+                m_age_grid.fill(1);
             }
 
             void Randomize(){
                 for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                    if (rand()%2) m_current_grid.set(i);
-                    else m_current_grid.reset(i);
-                    m_age_grid[m_age_grid.size() - i - 1] = m_current_grid[i];
+                    m_current_grid[i] = rand()%2;
+                    m_age_grid[i] = m_current_grid[i];
                 } 
             }
 
-            int GetNrNeighbor(const size_t cell_index, const int range=1) const {
+            unsigned int GetNrNeighbor(const size_t cell_index, const int range=1) const{
                 unsigned int neighbor = 0;
                 const int cell_line = cell_index/GRID_WIDTH; 
                 const int cell_column = cell_index%GRID_WIDTH;
@@ -103,37 +168,35 @@ class Grid2D
                 return neighbor;
             }
             
-            void Draw() const{
+            void Draw() const override {
                 m_window.SetRenderColor(m_cell_color);
                 SDL_Renderer* window_renderer = m_window.GetRenderer();
                 for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                     if (m_current_grid[i]){
-                        const int line = (GRID_HEIGHT-1) - i/GRID_WIDTH; 
-                        const int column = (GRID_WIDTH-1) - i%GRID_WIDTH;
+                        const int line = i/GRID_WIDTH; 
+                        const int column = i%GRID_WIDTH;
                         SDL_Rect cell_rect = {m_grid_margin.x + column*m_cell_size, m_grid_margin.y + line*m_cell_size, m_cell_size, m_cell_size};
                         SDL_RenderFillRect(window_renderer, &cell_rect);
                     }
                 }
             }
 
-            void Set(const PixelPosition& mouse){
-                const int column = (GRID_WIDTH-1) - (mouse.x - m_grid_margin.x) / m_cell_size; 
-                const int line = (GRID_HEIGHT-1) - (mouse.y - m_grid_margin.y) / m_cell_size;
+            void Set(const PixelPosition& mouse) override {
+                const int column = (mouse.x - m_grid_margin.x) / m_cell_size; 
+                const int line = (mouse.y - m_grid_margin.y) / m_cell_size;
                 if (column == m_last_cell.x && line == m_last_cell.y)
                     return;
                 if (line < 0 || line >= GRID_HEIGHT || column < 0 || column >= GRID_WIDTH)
                     return;
                 const int index = line*GRID_WIDTH+column;
-                m_current_grid.flip(index); 
-                m_age_grid[m_age_grid.size() - index - 1] = m_current_grid[index];
+                m_current_grid[index] ^= 1; // 2 states only
+                m_age_grid[index] = m_current_grid[index]; // 2 states only
                 m_last_cell = {column, line};
             }
 
-            std::vector<unsigned char> GetAgeGrid() const{
+            std::array<uint8_t, GRID_WIDTH*GRID_HEIGHT> GetAgeGrid() const{
                 return m_age_grid;
             }
-            
-            virtual void Update() = 0;
 };
 
 // https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
@@ -152,21 +215,20 @@ class GameOfLife : public Grid2D
         void Update() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 const int nr_neighbor = GetNrNeighbor(i);
-                const int vector_index = m_age_grid.size() - i - 1;
                 if (m_current_grid[i]){ // Living cell 
                     if (nr_neighbor < m_underpopulation || nr_neighbor > m_overpopulation){
-                        m_next_grid.reset(i);
-                        //m_age_grid[vector_index] = 0;
+                        m_next_grid[i] = 0;
+                        //m_age_grid[i] = 0;
                     }else{
-                        m_next_grid.set(i);
-                        m_age_grid[vector_index] += 1;
+                        m_next_grid[i] = 1;
+                        m_age_grid[i] += 1;
                     }
                 }else{ // Dead cell
                     if (nr_neighbor == m_birth){
-                        m_next_grid.set(i);
-                        m_age_grid[vector_index] += 1;
+                        m_next_grid[i] = 1;
+                        m_age_grid[i] += 1;
                     }
-                    else m_next_grid.reset(i); // Don't need to set cell age to 0 
+                    else m_next_grid[i] = 0; // Cell age is already 0 
                 }
             }
             m_current_grid = m_next_grid;    
@@ -203,15 +265,14 @@ class LangtonAnt : public Grid2D
             for (unsigned int i = 0 ; i < m_ant_positions.size() ; i++){
                 Grid2DPosition& ant_position = m_ant_positions[i];
                 const int index = ant_position.y * GRID_WIDTH + ant_position.x;
-                const int vector_index = m_age_grid.size() - index - 1;
                 if (m_current_grid[index]){
                     TurnRight(i);
                 }else{
                     TurnLeft(i);
                 }
                 ant_position += m_directions[m_ant_directions[i]]; // Move forward one unit
-                m_age_grid[vector_index]++;
-                m_current_grid[index].flip(); // Or m_next_grid
+                m_age_grid[i]++;
+                m_current_grid[index] ^= 1; // Or m_next_grid
             }
         }
 };

@@ -24,7 +24,7 @@ class TextureResult
         m_window_renderer(window.GetRenderer()), m_width(width), m_height(height)
         {       
             m_texture = SDL_CreateTexture(m_window_renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, m_width, m_height);
-            // SDL_SetTextureScaleMode(m_texture, SDL_ScaleModeLinear);
+            //SDL_SetTextureScaleMode(m_texture, SDL_ScaleModeLinear);
             m_current_texture_buffer = new uint32_t[m_width*m_height];
             m_next_texture_buffer = new uint32_t[m_width*m_height];
             m_frame_texture_buffer = new uint32_t[m_width*m_height];
@@ -109,7 +109,6 @@ class TextureResult
             }
         } */
         
-        /*
         void Update(const Grid2D& grid){
 
             std::swap(m_current_texture_buffer, m_next_texture_buffer);
@@ -118,9 +117,9 @@ class TextureResult
                 for (unsigned int y = 0 ; y < m_height ; y++){
                     const int indexBuffer = (m_height - 1 - y) * m_width + (m_width - 1 - x);
                     const int indexSrc = y * m_width + x;
-                    const unsigned char alive_neighbor = std::max(0, grid.GetNrNeighbor(indexSrc, 2)); // [0, 8]
+                    const unsigned char alive_neighbor = grid.GetNrNeighbor(indexSrc, 1); // [0, 8]
                     
-                    m_density[indexBuffer] = 0.6f * m_density[indexBuffer] + 0.4f *  alive_neighbor / 8.f;
+                    m_density[indexBuffer] = 0.9f * m_density[indexBuffer] + 0.1f *  alive_neighbor / 8.f;
                     SDL_Color c0 = {0, 0, 0}; // Low density
                     SDL_Color c1 = {230, 120, 50}; // High density
                     float t = m_density[indexBuffer];
@@ -136,14 +135,15 @@ class TextureResult
             //     for (unsigned int y = 0 ; y < m_height ; y++){
             //         const int indexBuffer = (m_height - 1 - y) * m_width + (m_width - 1 - x);
             //         const int indexSrc = y * m_width + x;
-            //         const unsigned char alive_neighbor = std::max(0, grid.GetNrNeighbor(indexSrc, 2));
+            //         const unsigned char alive_neighbor = grid.GetNrNeighbor(indexSrc, 2);
             //         float t = alive_neighbor/24.;
             //         SDL_Color r = {static_cast<unsigned char>(t*255), 0, static_cast<unsigned char>((1.-t)*255)};
             //         WriteColorNextBuffer(r, indexBuffer);
             //     }
             // }
-        }*/
-
+        }
+        
+        /*
         void Update(const Grid2D& grid){
             
             std::swap(m_current_texture_buffer, m_next_texture_buffer);
@@ -171,5 +171,5 @@ class TextureResult
 
             //     WriteColorNextBuffer(SDL_Color{(Uint8)r, (Uint8)g, (Uint8)b},i);
             // }
-        }
+        }*/
 };

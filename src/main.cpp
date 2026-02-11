@@ -7,7 +7,7 @@
 #include "time.hpp"
 #include "window.hpp"
 
-#define UPDATE_TIMER 0.001
+#define UPDATE_TIMER 0.1
 
 int main()
 {
@@ -15,11 +15,12 @@ int main()
     
     Grid2DEventController eventController;
     
-    //std::unique_ptr<Grid2D> ca = std::make_unique<GameOfLife>(window, SDL_Color{25, 240, 50}, 3, 2, 3);
-    std::unique_ptr<Grid2D> ca = std::make_unique<LangtonAnt>(window, SDL_Color{25, 240, 50}, Grid2DPosition{GRID_WIDTH/2, GRID_HEIGHT/2}, 1);
+    //std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, SDL_Color{25, 240, 50}, 3, 1, 3);
+    //std::unique_ptr<Grid> ca = std::make_unique<LangtonAnt>(window, SDL_Color{25, 240, 50}, Grid2DPosition{GRID_WIDTH/2, GRID_HEIGHT/2}, 1);
+    std::unique_ptr<Grid> ca = std::make_unique<Grid1D>(window, SDL_Color{25, 240, 50}, 126);
 
-    TextureResult result(window, ca->GetMargin(), ca->GetWidth(), ca->GetHeight(), ca->GetCellSize());
-    result.Update(*ca);
+    //TextureResult result(window, ca->GetMargin(), ca->GetWidth(), ca->GetHeight(), ca->GetCellSize());
+    //result.Update(*ca);
 
     bool gameloop = true;
     Time time;
@@ -41,13 +42,13 @@ int main()
             if (timer <= 0.0){
                 timer = UPDATE_TIMER;
                 ca->Update();
-                result.Update(*ca);
+                //result.Update(*ca);
             }
         }
 
         ca->Draw();
-        float t = timer == UPDATE_TIMER ? 0. : 1.0 - timer/UPDATE_TIMER;
-        result.Draw(t);
+        //float t = timer == UPDATE_TIMER ? 0. : 1.0 - timer/UPDATE_TIMER;
+        //result.Draw(t);
         window.UpdateRender();
     }
 

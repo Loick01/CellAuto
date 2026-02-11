@@ -3,9 +3,12 @@
 
 #include "event.hpp"
 #include "grid.hpp"
-#include "result.hpp"
 #include "time.hpp"
 #include "window.hpp"
+
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
 
 #define UPDATE_TIMER 0.05
 
@@ -19,12 +22,12 @@ int main()
     //std::unique_ptr<Grid> ca = std::make_unique<LangtonAnt>(window, SDL_Color{25, 240, 50}, Grid2DPosition{GRID_WIDTH/2, GRID_HEIGHT/2}, 1);
     std::unique_ptr<Grid> ca = std::make_unique<Grid1D>(window, SDL_Color{25, 240, 50}, 150);
 
-    //TextureResult result(window, ca->GetMargin(), ca->GetWidth(), ca->GetHeight(), ca->GetCellSize());
-    //result.Update(*ca);
-
     bool gameloop = true;
     Time time;
     float timer = UPDATE_TIMER;
+
+    // IMGUI_CHECKVERSION();
+    // ImGui::CreateContext();
 
     while(gameloop){
         window.ClearRenderer();
@@ -42,13 +45,10 @@ int main()
             if (timer <= 0.0){
                 timer = UPDATE_TIMER;
                 ca->Update();
-                //result.Update(*ca);
             }
         }
 
         ca->Draw();
-        //float t = timer == UPDATE_TIMER ? 0. : 1.0 - timer/UPDATE_TIMER;
-        //result.Draw(t);
         window.UpdateRender();
     }
 

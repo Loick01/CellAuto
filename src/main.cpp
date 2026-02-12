@@ -13,16 +13,17 @@ int main()
     Window window("CellAuto", {50,50,50});
     
     Grid2DEventController eventController;
-    
-    std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, SDL_Color{25, 240, 50}, 3, 2, 3);
-    //std::unique_ptr<Grid> ca = std::make_unique<LangtonAnt>(window, SDL_Color{25, 240, 50}, Grid2DPosition{GRID_WIDTH/2, GRID_HEIGHT/2}, 1);
-    //std::unique_ptr<Grid> ca = std::make_unique<Grid1D>(window, SDL_Color{25, 240, 50}, 150);
+    const int gridWidth = 64;
+    const int gridHeight = 64;
+    std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 3, 2, 3);
+    //std::unique_ptr<Grid> ca = std::make_unique<LangtonAnt>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, Grid2DPosition{gridWidth/2, gridHeight/2}, 1);
+    //std::unique_ptr<Grid> ca = std::make_unique<Grid1D>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 150);
 
     bool gameloop = true;
     Time time;
     float timer = stepTimer;
 
-    ImGuiLayer gui(window, stepTimer, window.GetBackgroundColor(), ca->GetCellColor(), *ca);
+    ImGuiLayer gui(window, stepTimer, window.GetBackgroundColor(), *ca);
     
     while(gameloop){
         window.ClearRenderer();

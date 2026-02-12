@@ -19,9 +19,11 @@ class ImGuiLayer
         SDL_Color& m_cellColor;
         SDL_Color& m_bgColor;
         float& m_stepTimer;
+        int& m_gridWidth;
+        int& m_gridHeight;
 
     public:
-        ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, SDL_Color& cellColor, Grid& grid);
+        ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid& grid);
         ~ImGuiLayer();
 
         void Draw() const;

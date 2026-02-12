@@ -23,6 +23,7 @@ class Window
 
         SDL_Renderer* GetRenderer() const;
         SDL_Window* GetWindow() const;
+        SDL_Color& GetBackgroundColor();
         int GetWidth() const;
         int GetHeight() const;
         bool HasError() const;

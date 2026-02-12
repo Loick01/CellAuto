@@ -33,6 +33,11 @@ SDL_Window* Window::GetWindow() const
     return m_window;
 }
 
+SDL_Color& Window::GetBackgroundColor()
+{
+    return m_bg_color;
+}
+
 int Window::GetWidth() const
 {
     return m_width;

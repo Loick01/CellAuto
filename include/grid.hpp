@@ -38,10 +38,6 @@ class Grid
             return m_grid_margin;
         }
 
-        int GetCellSize() const {
-            return m_cell_size;
-        }
-
         Grid2DPosition GetGridPositionFromMouse(const PixelPosition& mouse){
             const int column = (mouse.x - m_grid_margin.x) / m_cell_size; 
             const int line = (mouse.y - m_grid_margin.y) / m_cell_size;
@@ -57,10 +53,17 @@ class Grid
             return true;
         }
 
-        public:
-            virtual void Draw() const = 0;
-            virtual void Update() = 0;
-            virtual void Set(const PixelPosition& mouse) = 0;
+    public:
+        virtual void Draw() const = 0;
+        virtual void Update() = 0;
+        virtual void Set(const PixelPosition& mouse) = 0;
+        virtual void Empty() = 0;
+        virtual void Fill() = 0;
+        virtual void Randomize() = 0;
+
+        SDL_Color& GetCellColor() {
+            return m_cell_color;
+        }
 };
 
 // One dimensional grid, drawed by stacking them in a 2D grid
@@ -124,6 +127,22 @@ class Grid1D : public Grid
                 m_generation = position.y; // Evolution will resume from the modified line
             }
         }
+
+        void Empty() override{
+            std::fill(m_grid.begin(), m_grid.begin()+GRID_WIDTH, 0);
+            m_generation = 0;
+        }
+
+        void Fill() override{
+            std::fill(m_grid.begin(), m_grid.begin()+GRID_WIDTH, 1);
+            m_generation = 0;
+        }
+
+        void Randomize() override{
+            for (std::size_t i = 0; i < GRID_WIDTH; i++)
+                m_grid[i] = rand()%2;
+            m_generation = 0;
+        }
 };
 
 class Grid2D : public Grid
@@ -156,17 +175,17 @@ class Grid2D : public Grid
                 return GRID_HEIGHT;
             }
             
-            void Empty(){ // Set each cell state to 0
+            void Empty() override{
                 std::fill(m_current_grid.begin(), m_current_grid.end(), 0);
                 std::fill(m_age_grid.begin(), m_age_grid.end(), 0);
             }
 
-            void Fill(){ // Set each cell state to 1
+            void Fill() override{
                 std::fill(m_current_grid.begin(), m_current_grid.end(), 1);
                 std::fill(m_age_grid.begin(), m_age_grid.end(), 1);
             }
 
-            void Randomize(){
+            void Randomize() override{
                 for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                     m_current_grid[i] = rand()%2;
                     m_age_grid[i] = m_current_grid[i];

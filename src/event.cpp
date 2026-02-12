@@ -59,6 +59,14 @@ void EventController::PollAllEvents()
     m_events.clear();
     SDL_Event event;
     while (SDL_PollEvent(&event)){
+
+        ImGui_ImplSDL2_ProcessEvent(&event);
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.WantCaptureMouse || io.WantCaptureKeyboard){
+            m_break_events = true;
+            break;
+        }
+        m_break_events = false;
         m_events.push_back(event);
     }
 }
@@ -68,6 +76,7 @@ Grid2DEventController::Grid2DEventController()
     m_action_controller = new KeyboardMouseActionController();
     m_is_paused = false;
     m_is_set = false;
+    m_break_events = false;
 }
 
 PixelPosition Grid2DEventController::GetMouse() const
@@ -87,6 +96,10 @@ bool Grid2DEventController::GetIsSet() const
 
 void Grid2DEventController::HandleEvents()
 {
+    if (m_break_events){
+        m_is_set = false;
+        return;
+    }
     m_action_controller->GetActions(m_current_mouse);
     if (m_action_controller->IsPauseAction()){
         m_is_paused = !m_is_paused;

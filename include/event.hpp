@@ -5,6 +5,7 @@
 
 #include <SDL2/SDL.h>
 
+#include "gui.hpp"
 #include "type.hpp"
 
 class ActionController
@@ -35,6 +36,7 @@ class EventController
 {
     protected:
         std::vector<SDL_Event> m_events;
+        bool m_break_events;
         
     public:
         bool HandleWindowEvents() const;

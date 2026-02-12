@@ -3,14 +3,11 @@
 
 #include "event.hpp"
 #include "grid.hpp"
+#include "gui.hpp"
 #include "time.hpp"
 #include "window.hpp"
 
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
-
-#define UPDATE_TIMER 0.05
+#define UPDATE_TIMER 0.01
 
 int main()
 {
@@ -26,8 +23,7 @@ int main()
     Time time;
     float timer = UPDATE_TIMER;
 
-    // IMGUI_CHECKVERSION();
-    // ImGui::CreateContext();
+    ImGuiLayer gui(window);
 
     while(gameloop){
         window.ClearRenderer();
@@ -49,6 +45,7 @@ int main()
         }
 
         ca->Draw();
+        gui.Draw();
         window.UpdateRender();
     }
 

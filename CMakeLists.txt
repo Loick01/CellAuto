@@ -11,6 +11,7 @@ set(SOURCES
     src/main.cpp
     src/window.cpp
     src/event.cpp
+    src/gui.cpp
 )
 
 file(GLOB IMGUI_SOURCES

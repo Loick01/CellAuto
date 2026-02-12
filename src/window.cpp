@@ -28,6 +28,11 @@ SDL_Renderer* Window::GetRenderer() const
     return m_renderer;
 }
 
+SDL_Window* Window::GetWindow() const
+{
+    return m_window;
+}
+
 int Window::GetWidth() const
 {
     return m_width;

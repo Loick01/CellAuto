@@ -1,7 +1,7 @@
 #pragma once 
 
-#define GRID_WIDTH 128
-#define GRID_HEIGHT 64
+#define GRID_WIDTH 160
+#define GRID_HEIGHT 90
 
 struct PixelPosition
 {

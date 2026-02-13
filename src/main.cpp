@@ -7,6 +7,8 @@
 #include "time.hpp"
 #include "window.hpp"
 
+// Should be in Controller class
+// -----------------------------
 Window window("CellAuto", {50,50,50});
 float stepTimer = 0.5f;
 
@@ -16,20 +18,22 @@ const int gridHeight = 64;
 std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 3, 2, 3);
 
 ImGuiLayer gui(window, stepTimer, window.GetBackgroundColor(), ca.get());
+// -----------------------------
 
 void SwitchAutomata(const SetAutomata e)
 {
+    const SDL_Color previousCellColor = ca->GetCellColor();
     switch(e){
         case SetAutomata::Elementary: {
-            ca = std::make_unique<Grid1D>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 150);
+            ca = std::make_unique<Grid1D>(window, gridWidth, gridHeight, previousCellColor, 150);
             break;
         } 
         case SetAutomata::GoL: {
-            ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 3, 2, 3);
+            ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, previousCellColor, 3, 2, 3);
             break;
         }
         case SetAutomata::Langton: {
-            ca = std::make_unique<LangtonAnt>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, Grid2DPosition{gridWidth/2, gridHeight/2}, 1);
+            ca = std::make_unique<LangtonAnt>(window, gridWidth, gridHeight, previousCellColor, Grid2DPosition{gridWidth/2, gridHeight/2}, 1);
             break;
         }
         default:{

@@ -22,11 +22,8 @@ class ImGuiLayer : public Notifier<SetAutomata>
         SDL_Renderer* m_windowRenderer;
 
         Grid* m_grid;
-        SDL_Color* m_cellColor;
         SDL_Color& m_bgColor;
         float& m_stepTimer;
-        int* m_gridWidth;
-        int* m_gridHeight;
 
         int m_selectedAutomata;
 

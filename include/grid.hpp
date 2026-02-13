@@ -5,6 +5,10 @@
 #include <iostream>
 #include <vector>
 
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
+
 #include "type.hpp"
 #include "window.hpp"
 
@@ -52,6 +56,7 @@ class Grid
         virtual void Fill() = 0;
         virtual void Randomize() = 0;
         virtual void Resize() = 0;
+        virtual void SetGUI() = 0; // Parameters used in this function will be available in ImGui
 
         void ComputeSize(){ // Will be called when the grid size is modified with ImGui
             const int window_width = m_window.GetWidth();
@@ -68,16 +73,16 @@ class Grid
             m_gridMargin.y = window_height/2 - grid_size_y/2;
         }
         
-        SDL_Color* GetCellColor() {
-            return &m_cellColor;
+        SDL_Color& GetCellColor() {
+            return m_cellColor;
         }
 
-        int* GetWidth() {
-            return &m_gridWidth;
+        int& GetWidth() {
+            return m_gridWidth;
         }
 
-        int* GetHeight() {
-            return &m_gridHeight;
+        int& GetHeight() {
+            return m_gridHeight;
         }
 };
 
@@ -87,7 +92,7 @@ class Grid1D : public Grid
 {
     protected: 
         std::vector<uint8_t> m_grid;
-        const uint8_t m_rule;
+        uint8_t m_rule;
         size_t m_generation;
 
     public:
@@ -147,20 +152,26 @@ class Grid1D : public Grid
             }
         }
 
-        void Empty() override{
+        void Empty() override {
             std::fill(m_grid.begin(), m_grid.begin()+m_gridWidth, 0);
             m_generation = 0;
         }
 
-        void Fill() override{
+        void Fill() override {
             std::fill(m_grid.begin(), m_grid.begin()+m_gridWidth, 1);
             m_generation = 0;
         }
 
-        void Randomize() override{
+        void Randomize() override {
             for (std::size_t i = 0; i < m_gridWidth; i++)
                 m_grid[i] = rand()%2;
             m_generation = 0;
+        }
+
+        void SetGUI() override {
+            int rule_int = static_cast<int>(m_rule);
+            ImGui::SliderInt("Rule", &rule_int, 0, 255);
+            m_rule = rule_int;
         }
 };
 
@@ -258,7 +269,7 @@ class Grid2D : public Grid
 class GameOfLife : public Grid2D 
 {
     private:
-        const int m_birth, m_underpopulation, m_overpopulation;
+        int m_birth, m_underpopulation, m_overpopulation;
 
     public :
         GameOfLife(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cell_color, const int birth, const int underpopulation, const int overpopulation):
@@ -287,6 +298,12 @@ class GameOfLife : public Grid2D
                 }
             }
             m_current_grid = m_next_grid;    
+        }
+
+        void SetGUI() override {
+            ImGui::SliderInt("Birth", &m_birth, 0, 8);
+            ImGui::SliderInt("Underpopulation", &m_underpopulation, 0, 8);
+            ImGui::SliderInt("Overpopulation", &m_overpopulation, 0, 8);
         }
 };
 
@@ -329,5 +346,9 @@ class LangtonAnt : public Grid2D
                 m_age_grid[i]++;
                 m_current_grid[index] ^= 1; // Or m_next_grid
             }
+        }
+
+        void SetGUI() override {
+            // Nothing yet
         }
 };

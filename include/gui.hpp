@@ -5,26 +5,35 @@
 #include "imgui_impl_sdlrenderer2.h"
 
 #include "grid.hpp"
+#include "notifier.hpp"
 #include "window.hpp"
 
-class ImGuiLayer
+enum class SetAutomata
+{
+    Elementary, GoL, Langton
+};
+
+class ImGuiLayer : public Notifier<SetAutomata>
 {
     private:
-        void SetFrame() const;
+        void SetFrame();
         void Init(Window& window);
 
         SDL_Renderer* m_windowRenderer;
 
-        Grid& m_grid;
-        SDL_Color& m_cellColor;
+        Grid* m_grid;
+        SDL_Color* m_cellColor;
         SDL_Color& m_bgColor;
         float& m_stepTimer;
-        int& m_gridWidth;
-        int& m_gridHeight;
+        int* m_gridWidth;
+        int* m_gridHeight;
+
+        int m_selectedAutomata;
 
     public:
-        ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid& grid);
+        ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid);
         ~ImGuiLayer();
 
-        void Draw() const;
+        void SetGrid(Grid* grid);
+        void Draw();
 };

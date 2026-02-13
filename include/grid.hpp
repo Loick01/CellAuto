@@ -68,16 +68,16 @@ class Grid
             m_gridMargin.y = window_height/2 - grid_size_y/2;
         }
         
-        SDL_Color& GetCellColor() {
-            return m_cellColor;
+        SDL_Color* GetCellColor() {
+            return &m_cellColor;
         }
 
-        int& GetWidth() {
-            return m_gridWidth;
+        int* GetWidth() {
+            return &m_gridWidth;
         }
 
-        int& GetHeight() {
-            return m_gridHeight;
+        int* GetHeight() {
+            return &m_gridHeight;
         }
 };
 

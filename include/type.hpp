@@ -1,8 +1,26 @@
 #pragma once 
 
+// https://gist.github.com/beached/38a4ae52fcadfab68cb6de05403fa393
+
 struct PixelPosition
 {
     int x, y;
+
+    PixelPosition operator-(PixelPosition const& rhs) const{
+        return PixelPosition{x-rhs.x, y-rhs.y};
+    }
+
+    PixelPosition& operator+=(PixelPosition const& rhs){
+        x += rhs.x;
+        y += rhs.y;
+        return *this;
+    }
+
+    PixelPosition& operator/(const int rhs){
+        x /= rhs;
+        y /= rhs;
+        return *this;
+    }
 };
 
 struct Grid2DPosition

@@ -1,7 +1,7 @@
 #include "gui.hpp"
 
-ImGuiLayer::ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid):
-m_windowRenderer(window.GetRenderer()), m_stepTimer(stepTimer), m_bgColor(bgColor), m_grid(grid), m_selectedAutomata(1)
+ImGuiLayer::ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid, Camera& camera):
+m_windowRenderer(window.GetRenderer()), m_stepTimer(stepTimer), m_bgColor(bgColor), m_grid(grid), m_selectedAutomata(1), m_camera(camera)
 {
     Init(window);
 }
@@ -62,12 +62,14 @@ void ImGuiLayer::SetFrame()
             int& gridWidth = m_grid->GetWidth();
             if (ImGui::SliderInt("Grid width", &gridWidth, 1, 200)){
                 m_grid->Resize();
-                m_grid->ComputeSize();
+                m_grid->ComputeCellSize();
+                m_camera.LookAtGrid(m_grid->GetSize()/2);
             }
             int& gridHeight = m_grid->GetHeight();
             if (ImGui::SliderInt("Grid height", &gridHeight, 1, 200)){
                 m_grid->Resize();
-                m_grid->ComputeSize();
+                m_grid->ComputeCellSize();
+                m_camera.LookAtGrid(m_grid->GetSize()/2);
             }
             ImGui::EndTabItem();
         }

@@ -4,6 +4,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
+#include "camera.hpp"
 #include "grid.hpp"
 #include "notifier.hpp"
 #include "window.hpp"
@@ -25,10 +26,11 @@ class ImGuiLayer : public Notifier<SetAutomata>
         SDL_Color& m_bgColor;
         float& m_stepTimer;
 
+        Camera& m_camera;
         int m_selectedAutomata;
 
     public:
-        ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid);
+        ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid, Camera& camera);
         ~ImGuiLayer();
 
         void SetGrid(Grid* grid);

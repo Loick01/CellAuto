@@ -17,7 +17,6 @@ class Grid
     protected: 
         Window& m_window;
         SDL_Color m_cellColor;
-        PixelPosition m_gridMargin;
         Grid2DPosition m_lastCell; // Last interacted cell with the mouse (should not nbe here)
         int m_cellSize;
         int m_gridWidth;
@@ -26,16 +25,12 @@ class Grid
         Grid(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cell_color) :
         m_window(window), m_cellColor(cell_color), m_gridWidth(gridWidth), m_gridHeight(gridHeight)
         {
-            ComputeSize();
+            ComputeCellSize();
         }
         
-        PixelPosition GetMargin() const { 
-            return m_gridMargin;
-        }
-        
-        Grid2DPosition GetGridPositionFromMouse(const PixelPosition& mouse){
-            const int column = (mouse.x - m_gridMargin.x) / m_cellSize; 
-            const int line = (mouse.y - m_gridMargin.y) / m_cellSize;
+        Grid2DPosition GetGridPositionFromMouse(const PixelPosition& mouse, const PixelPosition& cameraPosition){
+            const int column = (mouse.x + cameraPosition.x) / m_cellSize; 
+            const int line = (mouse.y + cameraPosition.y) / m_cellSize;
             return Grid2DPosition{column, line};
         }
 
@@ -49,16 +44,16 @@ class Grid
         }
 
     public:
-        virtual void Draw() const = 0;
+        virtual void Draw(const PixelPosition position) const = 0;
         virtual void Update() = 0;
-        virtual void Set(const PixelPosition& mouse) = 0;
+        virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) = 0;
         virtual void Empty() = 0;
         virtual void Fill() = 0;
         virtual void Randomize() = 0;
         virtual void Resize() = 0;
         virtual void SetGUI() = 0; // Parameters used in this function will be available in ImGui
 
-        void ComputeSize(){ // Will be called when the grid size is modified with ImGui
+        void ComputeCellSize(){ // Will be called when the grid size is modified with ImGui
             const int window_width = m_window.GetWidth();
             const int window_height = m_window.GetHeight();
             const int max_size_x = window_width/m_gridWidth; // Maximum cell size to fill window width
@@ -67,10 +62,10 @@ class Grid
                 m_cellSize = max_size_x;
             else 
                 m_cellSize = max_size_y;
-            const int grid_size_x = m_gridWidth*m_cellSize;
-            const int grid_size_y = m_gridHeight*m_cellSize;
-            m_gridMargin.x = window_width/2 - grid_size_x/2; // Center the grid on the window
-            m_gridMargin.y = window_height/2 - grid_size_y/2;
+        }
+        
+        PixelPosition GetSize() const { 
+            return PixelPosition{m_gridWidth*m_cellSize, m_gridHeight*m_cellSize};
         }
         
         SDL_Color& GetCellColor() {
@@ -119,14 +114,14 @@ class Grid1D : public Grid
             return right << 2 | current << 1 | left;
         }
 
-        void Draw() const override {
+        void Draw(const PixelPosition cameraPosition) const override {
             m_window.SetRenderColor(m_cellColor);
             SDL_Renderer* window_renderer = m_window.GetRenderer();
             for (std::size_t i = 0; i < m_grid.size(); i++) {
                 if (m_grid[i]){
                     const int line = i/m_gridWidth; 
                     const int column = i%m_gridWidth;
-                    SDL_Rect cell_rect = {m_gridMargin.x + column*m_cellSize, m_gridMargin.y + line*m_cellSize, m_cellSize, m_cellSize};
+                    SDL_Rect cell_rect = {column*m_cellSize - cameraPosition.x , line*m_cellSize - cameraPosition.y, m_cellSize, m_cellSize};
                     SDL_RenderFillRect(window_renderer, &cell_rect);
                 }
             }
@@ -143,8 +138,8 @@ class Grid1D : public Grid
             ++m_generation;
         }
 
-        void Set(const PixelPosition& mouse) override {
-            Grid2DPosition position = GetGridPositionFromMouse(mouse);
+        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) override {
+            Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition);
             if (IsGridPositionValid(position)){
                 const int index = position.y*m_gridWidth+position.x;
                 m_grid[index] ^= 1; // 2 states only
@@ -238,21 +233,21 @@ class Grid2D : public Grid
                 return neighbor;
             }
             
-            void Draw() const override {
+            void Draw(const PixelPosition cameraPosition) const override {
                 m_window.SetRenderColor(m_cellColor);
                 SDL_Renderer* window_renderer = m_window.GetRenderer();
                 for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                     if (m_current_grid[i]){
                         const int line = i/m_gridWidth; 
                         const int column = i%m_gridWidth;
-                        SDL_Rect cell_rect = {m_gridMargin.x + column*m_cellSize, m_gridMargin.y + line*m_cellSize, m_cellSize, m_cellSize};
+                        SDL_Rect cell_rect = {column*m_cellSize - cameraPosition.x, line*m_cellSize - cameraPosition.y, m_cellSize, m_cellSize};
                         SDL_RenderFillRect(window_renderer, &cell_rect);
                     }
                 }
             }
 
-            void Set(const PixelPosition& mouse) override {
-                Grid2DPosition position = GetGridPositionFromMouse(mouse);
+            void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) override {
+                Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition);
                 if (IsGridPositionValid(position)){
                     const int index = position.y*m_gridWidth+position.x;
                     m_current_grid[index] ^= 1; // 2 states only

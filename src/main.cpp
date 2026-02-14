@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 
+#include "camera.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "gui.hpp"
@@ -12,12 +13,13 @@
 Window window("CellAuto", {50,50,50});
 float stepTimer = 0.5f;
 
-Grid2DEventController eventController;
+GridEventController eventController;
 const int gridWidth = 64;
 const int gridHeight = 64;
 std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 3, 2, 3);
+Camera camera(window, ca.get());
 
-ImGuiLayer gui(window, stepTimer, window.GetBackgroundColor(), ca.get());
+ImGuiLayer gui(window, stepTimer, window.GetBackgroundColor(), ca.get(), camera);
 // -----------------------------
 
 void SwitchAutomata(const SetAutomata e)
@@ -47,7 +49,7 @@ void SwitchAutomata(const SetAutomata e)
 int main()
 {
     
-    Grid2DEventController eventController;
+    GridEventController eventController;
 
     bool gameloop = true;
     Time time;
@@ -61,9 +63,10 @@ int main()
         gameloop = eventController.HandleWindowEvents();
         eventController.HandleEvents();
 
+        camera.Move(eventController.GetIsMoving(), eventController.GetMouse());
         if (eventController.GetIsPaused()){
             if (eventController.GetIsSet()){
-                ca->Set(eventController.GetMouse());
+                ca->Set(eventController.GetMouse(), camera.GetPosition());
             }
         }else{
             time.Update();
@@ -74,7 +77,7 @@ int main()
             }
         }
 
-        ca->Draw();
+        ca->Draw(camera.GetPosition());
         gui.Draw();
         window.UpdateRender();
     }

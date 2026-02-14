@@ -37,6 +37,11 @@ bool KeyboardMouseActionController::IsSetAction()
     return m_mouse_state & SDL_BUTTON_LMASK;
 }
 
+bool KeyboardMouseActionController::IsMovingCameraAction()
+{
+    return m_mouse_state & SDL_BUTTON_MMASK;
+}
+
 bool EventController::HandleWindowEvents() const
 {
     for (SDL_Event event : m_events){
@@ -71,30 +76,36 @@ void EventController::PollAllEvents()
     }
 }
 
-Grid2DEventController::Grid2DEventController()
+GridEventController::GridEventController()
 {
     m_action_controller = new KeyboardMouseActionController();
     m_is_paused = false;
     m_is_set = false;
     m_break_events = false;
+    m_is_moving = false;
 }
 
-PixelPosition Grid2DEventController::GetMouse() const
+PixelPosition GridEventController::GetMouse() const
 {
     return m_current_mouse;
 }
 
-bool Grid2DEventController::GetIsPaused() const
+bool GridEventController::GetIsPaused() const
 {
     return m_is_paused;
 }
 
-bool Grid2DEventController::GetIsSet() const
+bool GridEventController::GetIsSet() const
 {
     return m_is_set;
 }
 
-void Grid2DEventController::HandleEvents()
+bool GridEventController::GetIsMoving() const
+{
+    return m_is_moving;
+}
+
+void GridEventController::HandleEvents()
 {
     if (m_break_events){
         m_is_set = false;
@@ -106,4 +117,5 @@ void Grid2DEventController::HandleEvents()
         return;
     }
     m_is_set = m_action_controller->IsSetAction(); // Add/Remove a cell
+    m_is_moving = m_action_controller->IsMovingCameraAction();
 }

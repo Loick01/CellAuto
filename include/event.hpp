@@ -13,6 +13,7 @@ class ActionController
     public:
         virtual bool IsPauseAction() = 0;
         virtual bool IsSetAction() = 0;
+        virtual bool IsMovingCameraAction() = 0;
         virtual void GetActions(PixelPosition& current_mouse) = 0;
 };
 
@@ -27,6 +28,7 @@ class KeyboardMouseActionController : public ActionController
         KeyboardMouseActionController(); 
         bool IsPauseAction() override;
         bool IsSetAction() override;
+        bool IsMovingCameraAction() override;
         void GetActions(PixelPosition& current_mouse) override;
         void GetKeyboardActions();
         void GetMouseActions(PixelPosition& current_mouse);
@@ -44,18 +46,20 @@ class EventController
         void PollAllEvents();
 };
 
-class Grid2DEventController: public EventController
+class GridEventController: public EventController
 {
     private:
         ActionController* m_action_controller;
         PixelPosition m_current_mouse;
         bool m_is_paused;
         bool m_is_set;
+        bool m_is_moving;
 
     public:
-        Grid2DEventController();
+        GridEventController();
         PixelPosition GetMouse() const;
         bool GetIsPaused() const;
         bool GetIsSet() const;
+        bool GetIsMoving() const;
         void HandleEvents() override;
 };

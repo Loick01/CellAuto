@@ -37,7 +37,7 @@ class Grid
         bool IsGridPositionValid(const Grid2DPosition& position){
             if (position.x == m_lastCell.x && position.y == m_lastCell.y)
                 return false;
-            if (position.y < 0 || position.y >= m_gridHeight || position.y < 0 || position.y >= m_gridWidth)
+            if (position.y < 0 || position.y >= m_gridHeight || position.x < 0 || position.x >= m_gridWidth)
                 return false;
             m_lastCell = Grid2DPosition{position.x, position.y};
             return true;
@@ -341,6 +341,11 @@ class LangtonAnt : public Grid2D
                 m_age_grid[i]++;
                 m_current_grid[index] ^= 1; // Or m_next_grid
             }
+        }
+        void Resize() override {
+            Grid2D::Resize();
+            for (unsigned int i = 0 ; i < m_ant_positions.size() ; i++)
+                m_ant_positions[i] = Grid2DPosition{m_gridWidth/2, m_gridHeight/2}; // Center the ant position when resizing the grid
         }
 
         void SetGUI() override {

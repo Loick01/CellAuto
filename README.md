@@ -39,6 +39,20 @@ make
 + **Left click :** Make cells alive/dead
 + **Escape :** Close the window
 
+### Demo videos
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <a href="https://www.youtube.com/watch?v=l4J-b-8SOkM">
+        <img src="https://img.youtube.com/vi/l4J-b-8SOkM/maxresdefault.jpg" height="200">
+      </a>
+      <br>
+      <strong>Game of Life, Langton's Ant and 1D Automata</strong>
+    </td>
+  </tr>
+</table>
+
 ### ImGui settings
 
 <table align="center">

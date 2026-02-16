@@ -1,5 +1,6 @@
 #pragma once 
 
+#include <array>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -175,7 +176,6 @@ class Grid2D : public Grid
     protected:    
         std::vector<uint8_t> m_current_grid;
         std::vector<uint8_t> m_next_grid;
-        std::vector<uint8_t> m_age_grid;
 
         public:
             Grid2D(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cell_color) : 
@@ -189,7 +189,6 @@ class Grid2D : public Grid
             void Resize() override {
                 m_current_grid.assign(m_gridWidth*m_gridHeight, 1);
                 m_next_grid.assign(m_gridWidth*m_gridHeight, 1);
-                m_age_grid.assign(m_gridWidth*m_gridHeight, 1);
             }
 
             std::vector<uint8_t> GetGrid() const {
@@ -198,22 +197,19 @@ class Grid2D : public Grid
             
             void Empty() override{
                 std::fill(m_current_grid.begin(), m_current_grid.end(), 0);
-                std::fill(m_age_grid.begin(), m_age_grid.end(), 0);
             }
 
             void Fill() override{
                 std::fill(m_current_grid.begin(), m_current_grid.end(), 1);
-                std::fill(m_age_grid.begin(), m_age_grid.end(), 1);
             }
 
             void Randomize() override{
                 for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                     m_current_grid[i] = rand()%2;
-                    m_age_grid[i] = m_current_grid[i];
                 } 
             }
 
-            unsigned int GetNrNeighbor(const size_t cell_index, const int range=1) const{
+            unsigned int GetNrAliveNeighbor(const size_t cell_index, const int range=1) const{
                 unsigned int neighbor = 0;
                 const int cell_line = cell_index/m_gridWidth; 
                 const int cell_column = cell_index%m_gridWidth;
@@ -251,12 +247,7 @@ class Grid2D : public Grid
                 if (IsGridPositionValid(position)){
                     const int index = position.y*m_gridWidth+position.x;
                     m_current_grid[index] ^= 1; // 2 states only
-                    m_age_grid[index] = m_current_grid[index]; // 2 states only
                 }
-            }
-
-            std::vector<uint8_t> GetAgeGrid() const{
-                return m_age_grid;
             }
 };
 
@@ -264,41 +255,53 @@ class Grid2D : public Grid
 class GameOfLife : public Grid2D 
 {
     private:
-        int m_birth, m_underpopulation, m_overpopulation;
+        std::array<bool, 9> m_birth{false}, m_survive{false}; 
 
     public :
-        GameOfLife(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cell_color, const int birth, const int underpopulation, const int overpopulation):
-        Grid2D(window, gridWidth, gridHeight, cell_color), m_birth(birth), m_underpopulation(underpopulation), m_overpopulation(overpopulation)
+        GameOfLife(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cell_color,
+            std::vector<int> birth, std::vector<int> survive):
+        Grid2D(window, gridWidth, gridHeight, cell_color)
         {
+            for (int i : birth)
+                m_birth[i] = true;
+            for (int i : survive)
+                m_survive[i] = true;
+            
             Randomize();
         }
 
         void Update() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                const int nr_neighbor = GetNrNeighbor(i);
+                const int nr_alive = GetNrAliveNeighbor(i);
                 if (m_current_grid[i]){ // Living cell 
-                    if (nr_neighbor < m_underpopulation || nr_neighbor > m_overpopulation){
-                        m_next_grid[i] = 0;
-                        //m_age_grid[i] = 0;
-                    }else{
+                    if (m_survive[nr_alive]){
                         m_next_grid[i] = 1;
-                        m_age_grid[i] += 1;
+                    }else{
+                        m_next_grid[i] = 0;
                     }
                 }else{ // Dead cell
-                    if (nr_neighbor == m_birth){
+                    if (m_birth[nr_alive]){
                         m_next_grid[i] = 1;
-                        m_age_grid[i] += 1;
                     }
-                    else m_next_grid[i] = 0; // Cell age is already 0 
+                    else m_next_grid[i] = 0;
                 }
             }
             m_current_grid = m_next_grid;    
         }
 
         void SetGUI() override {
-            ImGui::SliderInt("Birth", &m_birth, 0, 8);
-            ImGui::SliderInt("Underpopulation", &m_underpopulation, 0, 8);
-            ImGui::SliderInt("Overpopulation", &m_overpopulation, 0, 8);
+            ImGui::Text("Birth rule");
+            for (int i = 0 ; i < 9 ; i++){
+                ImGui::SameLine();
+                if (ImGui::Button((std::to_string(i)+"##Birth").c_str()))
+                    m_birth[i] = !m_birth[i];
+            }
+            ImGui::Text("Survive rule");
+            for (int i = 0 ; i < 9 ; i++){
+                ImGui::SameLine();
+                if (ImGui::Button((std::to_string(i)+"##Survive").c_str()))
+                    m_survive[i] = !m_survive[i];
+            }
         }
 };
 
@@ -338,7 +341,6 @@ class LangtonAnt : public Grid2D
                     TurnLeft(i);
                 }
                 ant_position += m_directions[m_ant_directions[i]]; // Move forward one unit
-                m_age_grid[i]++;
                 m_current_grid[index] ^= 1; // Or m_next_grid
             }
         }

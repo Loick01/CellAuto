@@ -16,7 +16,8 @@ float stepTimer = 0.5f;
 GridEventController eventController;
 const int gridWidth = 64;
 const int gridHeight = 64;
-std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 3, 2, 3);
+std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 
+    std::initializer_list<int>{3}, std::initializer_list<int>{2, 3});
 Camera camera(window, ca.get());
 
 ImGuiLayer gui(window, stepTimer, window.GetBackgroundColor(), ca.get(), camera);
@@ -31,7 +32,8 @@ void SwitchAutomata(const SetAutomata e)
             break;
         } 
         case SetAutomata::GoL: {
-            ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, previousCellColor, 3, 2, 3);
+            ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, previousCellColor, 
+                std::initializer_list<int>{3}, std::initializer_list<int>{2, 3});
             break;
         }
         case SetAutomata::Langton: {

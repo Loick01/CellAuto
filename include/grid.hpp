@@ -22,9 +22,10 @@ class Grid
         int m_cellSize;
         int m_gridWidth;
         int m_gridHeight;
+        int m_density; // Used when randomize the grid
 
         Grid(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cell_color) :
-        m_window(window), m_cellColor(cell_color), m_gridWidth(gridWidth), m_gridHeight(gridHeight)
+        m_window(window), m_cellColor(cell_color), m_gridWidth(gridWidth), m_gridHeight(gridHeight), m_density(25)
         {
             ComputeCellSize();
         }
@@ -79,6 +80,10 @@ class Grid
 
         int& GetHeight() {
             return m_gridHeight;
+        }
+
+        int& GetDensity() {
+            return m_density;
         }
 };
 
@@ -159,8 +164,10 @@ class Grid1D : public Grid
         }
 
         void Randomize() override {
-            for (std::size_t i = 0; i < m_gridWidth; i++)
-                m_grid[i] = rand()%2;
+            for (std::size_t i = 0; i < m_gridWidth; i++){
+                unsigned int r = rand()%100;
+                m_grid[i] = r < m_density ? 1 : 0;
+            }
             m_generation = 0;
         }
 
@@ -205,7 +212,8 @@ class Grid2D : public Grid
 
             void Randomize() override{
                 for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                    m_current_grid[i] = rand()%2;
+                    unsigned int r = rand()%100;
+                    m_current_grid[i] = r < m_density ? 1 : 0;
                 } 
             }
 
@@ -320,6 +328,13 @@ class LangtonAnt : public Grid2D
         void TurnLeft(const unsigned int ant_index){
             m_ant_directions[ant_index] = (m_ant_directions[ant_index]+3)%4;
         }
+
+        void UpdatePosition(Grid2DPosition& antPosition, const Grid2DPosition& direction){
+            Grid2DPosition newPosition = antPosition + direction;
+            newPosition.x = (newPosition.x + m_gridWidth)  % m_gridWidth;
+            newPosition.y = (newPosition.y + m_gridHeight) % m_gridHeight;
+            antPosition = newPosition;
+        }
         
     public:
         LangtonAnt(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cell_color, const Grid2DPosition initial_position, const unsigned int nr_ant=1):
@@ -340,7 +355,7 @@ class LangtonAnt : public Grid2D
                 }else{
                     TurnLeft(i);
                 }
-                ant_position += m_directions[m_ant_directions[i]]; // Move forward one unit
+                UpdatePosition(ant_position, m_directions[m_ant_directions[i]]); // Move forward one unit
                 m_current_grid[index] ^= 1; // Or m_next_grid
             }
         }

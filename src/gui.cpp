@@ -51,6 +51,8 @@ void ImGuiLayer::SetFrame()
             ImGui::SameLine();
             if (ImGui::Button("Randomize")) 
                 m_grid->Randomize();
+            int& gridDensity = m_grid->GetDensity();
+            ImGui::SliderInt("Density (%)", &gridDensity, 0, 100);
 
             m_grid->SetGUI();
             

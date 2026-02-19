@@ -298,6 +298,22 @@ class GameOfLife : public Grid2D
         }
 
         void SetGUI() override {
+            ImGui::Text("Current rule : B");
+            for (unsigned int i = 0 ; i < 9 ; i++){
+                if (m_birth[i]){
+                    ImGui::SameLine(0, 0);
+                    ImGui::Text("%d", i);
+                }
+            }
+            ImGui::SameLine(0, 0);
+            ImGui::Text("/S");
+            for (unsigned int i = 0 ; i < 9 ; i++){
+                if (m_survive[i]){
+                    ImGui::SameLine(0, 0);
+                    ImGui::Text("%d", i);
+                }
+            }
+            
             ImGui::Text("Birth rule");
             for (int i = 0 ; i < 9 ; i++){
                 ImGui::SameLine();

@@ -40,6 +40,10 @@ void SwitchAutomata(const SetAutomata e)
             ca = std::make_unique<LangtonAnt>(window, gridWidth, gridHeight, previousCellColor, Grid2DPosition{gridWidth/2, gridHeight/2}, 1);
             break;
         }
+        case SetAutomata::GreenbergHastings: {
+            ca = std::make_unique<GreenbergHastings>(window, gridWidth, gridHeight, previousCellColor, SDL_Color{240, 25, 50});
+            break;
+        }
         default:{
             std::cout << "Undefined\n"; // Will throw an error
             break;

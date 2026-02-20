@@ -31,7 +31,7 @@ void ImGuiLayer::SetFrame()
 
     if (ImGui::BeginTabBar("TabBar")){
         if (ImGui::BeginTabItem("Automata")){
-            const char* items[] = { "Elementary", "Game of Life", "Langton's Ant" }; // Must be the same order than SetAutomata
+            const char* items[] = { "Elementary", "Game of Life", "Langton's Ant", "Greenberg-Hastings" }; // Must be the same order than SetAutomata
 
             if (ImGui::BeginCombo("Automata", items[m_selectedAutomata])){
                 for (int i = 0; i < IM_ARRAYSIZE(items); i++){
@@ -54,7 +54,7 @@ void ImGuiLayer::SetFrame()
             int& gridDensity = m_grid->GetDensity();
             ImGui::SliderInt("Density (%)", &gridDensity, 0, 100);
 
-            m_grid->SetGUI();
+            m_grid->SetAutomataGUI();
             
             ImGui::EndTabItem();
         }
@@ -77,13 +77,18 @@ void ImGuiLayer::SetFrame()
         }
 
         if (ImGui::BeginTabItem("Colors")){
-            SDL_Color& currentColor = m_grid->GetCellColor();
-            float cellColor[3] = {currentColor.r/255.f, currentColor.g/255.f, currentColor.b/255.f};
             float bgColor[3] = {m_bgColor.r/255.f, m_bgColor.g/255.f, m_bgColor.b/255.f};
             ImGui::ColorEdit3("Background color", bgColor);
+            m_bgColor = {static_cast<Uint8>(bgColor[0]*255), static_cast<Uint8>(bgColor[1]*255), static_cast<Uint8>(bgColor[2]*255)};
+            
+            // Should be in SetColorGUI() ?
+            SDL_Color& currentColor = m_grid->GetCellColor();
+            float cellColor[3] = {currentColor.r/255.f, currentColor.g/255.f, currentColor.b/255.f};
             ImGui::ColorEdit3("Cell color", cellColor);
             currentColor = {static_cast<Uint8>(cellColor[0]*255), static_cast<Uint8>(cellColor[1]*255), static_cast<Uint8>(cellColor[2]*255)};
-            m_bgColor = {static_cast<Uint8>(bgColor[0]*255), static_cast<Uint8>(bgColor[1]*255), static_cast<Uint8>(bgColor[2]*255)};
+
+            m_grid->SetColorGUI();
+            
             ImGui::EndTabItem();
         }
 

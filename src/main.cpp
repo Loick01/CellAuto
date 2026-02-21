@@ -47,6 +47,10 @@ void SwitchAutomata(const SetAutomata e)
             ca = std::make_unique<ForestFire>(window, gridWidth, gridHeight, 0.5, 0.01);
             break;
         }
+        case SetAutomata::Cyclic: {
+            ca = std::make_unique<Cyclic>(window, gridWidth, gridHeight, 10, 1);
+            break;
+        }
         default:{
             std::cout << "Undefined\n"; // Will throw an error
             break;

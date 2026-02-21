@@ -186,12 +186,13 @@ class Grid2D : public Grid
         std::vector<SDL_Color> m_cellColors; // n colors for n+1 states. 0 is the state a cell has when it doesn't have to be rendered
         std::vector<uint8_t> m_current_grid;
         std::vector<uint8_t> m_next_grid;
+        int m_nrState;
 
     public:
-        Grid2D(Window& window, const int gridWidth, const int gridHeight, const unsigned int nrState) : 
-        Grid(window, gridWidth, gridHeight)
+        Grid2D(Window& window, const int gridWidth, const int gridHeight, const int nrState) : 
+        Grid(window, gridWidth, gridHeight), m_nrState(nrState)
         {
-            m_cellColors.resize(nrState-1);
+            m_cellColors.resize(m_nrState-1);
             Resize();
             std::srand(std::time({}));
             m_lastCell = {-1, -1}; // Unvalid cell
@@ -217,7 +218,7 @@ class Grid2D : public Grid
         void Randomize() override{
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 unsigned int r = rand()%100;
-                m_current_grid[i] = r < m_density ? 1 : 0;
+                m_current_grid[i] = r < m_density ? 1 + rand()%(m_nrState-1) : 0;
             } 
         }
 
@@ -410,7 +411,7 @@ class GreenbergHastings : public Grid2D
         GreenbergHastings(Window& window, const int gridWidth, const int gridHeight):
         Grid2D(window, gridWidth, gridHeight, 3)
         {
-            Randomize();
+            Empty();
         }
 
         void Update() override {
@@ -439,7 +440,7 @@ class ForestFire : public Grid2D
         ForestFire(Window& window, const int gridWidth, const int gridHeight, const float p, const float f):
         Grid2D(window, gridWidth, gridHeight, 3), m_p(p), m_f(f)
         {
-            Randomize();
+            Empty();
         }
 
         void Update() override {
@@ -460,5 +461,36 @@ class ForestFire : public Grid2D
         void SetAutomataGUI() override {
             ImGui::SliderFloat("P", &m_p, 0., 1.);
             ImGui::SliderFloat("F", &m_f, 0., 1.);
+        }
+};
+
+// https://en.wikipedia.org/wiki/Cyclic_cellular_automaton
+class Cyclic : public Grid2D
+{      
+    private:
+        int m_threshold;
+
+    public:
+        Cyclic(Window& window, const int gridWidth, const int gridHeight, const int nrState, const int threshold):
+        Grid2D(window, gridWidth, gridHeight, nrState), m_threshold(threshold)
+        {
+            Empty();
+        }
+
+        void Update() override {
+            for (std::size_t i = 0; i < m_current_grid.size(); i++) {
+                const uint8_t currentState = m_current_grid[i];
+                const uint8_t nextState = (currentState+1)%m_nrState;
+                if (GetNeighborsInState(Neighborhood::VonNeumann, i, nextState) >= m_threshold)
+                    m_next_grid[i] = nextState;
+                else
+                    m_next_grid[i] = currentState;
+            }
+            m_current_grid = m_next_grid;   
+        }
+
+        void SetAutomataGUI() override {
+            ImGui::SliderInt("Number of states", &m_nrState, 1, 20);
+            ImGui::SliderInt("Threshold", &m_threshold, 0, 8);
         }
 };

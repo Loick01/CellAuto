@@ -16,7 +16,7 @@ float stepTimer = 0.5f;
 GridEventController eventController;
 const int gridWidth = 64;
 const int gridHeight = 64;
-std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 
+std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, 
     std::initializer_list<int>{3}, std::initializer_list<int>{2, 3});
 Camera camera(window, ca.get());
 
@@ -25,27 +25,26 @@ ImGuiLayer gui(window, stepTimer, window.GetBackgroundColor(), ca.get(), camera)
 
 void SwitchAutomata(const SetAutomata e)
 {
-    const SDL_Color previousCellColor = ca->GetCellColor();
     switch(e){
         case SetAutomata::Elementary: {
-            ca = std::make_unique<Grid1D>(window, gridWidth, gridHeight, previousCellColor, 150);
+            ca = std::make_unique<Grid1D>(window, gridWidth, gridHeight, SDL_Color{25, 240, 50}, 150);
             break;
         } 
         case SetAutomata::GoL: {
-            ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, previousCellColor, 
+            ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, 
                 std::initializer_list<int>{3}, std::initializer_list<int>{2, 3});
             break;
         }
         case SetAutomata::Langton: {
-            ca = std::make_unique<LangtonAnt>(window, gridWidth, gridHeight, previousCellColor, Grid2DPosition{gridWidth/2, gridHeight/2}, 1);
+            ca = std::make_unique<LangtonAnt>(window, gridWidth, gridHeight, Grid2DPosition{gridWidth/2, gridHeight/2}, 1);
             break;
         }
         case SetAutomata::GreenbergHastings: {
-            ca = std::make_unique<GreenbergHastings>(window, gridWidth, gridHeight, previousCellColor, SDL_Color{240, 25, 50});
+            ca = std::make_unique<GreenbergHastings>(window, gridWidth, gridHeight);
             break;
         }
         case SetAutomata::ForestFire: {
-            ca = std::make_unique<ForestFire>(window, gridWidth, gridHeight, previousCellColor, SDL_Color{240, 25, 50});
+            ca = std::make_unique<ForestFire>(window, gridWidth, gridHeight, 0.5, 0.01);
             break;
         }
         default:{

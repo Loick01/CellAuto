@@ -11,7 +11,7 @@
 
 enum class SetAutomata
 {
-    Elementary, GoL, Langton, GreenbergHastings
+    Elementary, GoL, Langton, GreenbergHastings, ForestFire
 };
 
 class ImGuiLayer : public Notifier<SetAutomata>

@@ -13,6 +13,11 @@
 #include "type.hpp"
 #include "window.hpp"
 
+enum class Neighborhood 
+{
+    VonNeumann, Moore
+};
+
 class Grid
 {
     protected: 
@@ -46,7 +51,6 @@ class Grid
         }
 
     public:
-        virtual uint8_t GetNeighbor(const size_t cell_index) const = 0;
         virtual void Draw(const PixelPosition position) const = 0;
         virtual void Update() = 0;
         virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) = 0;
@@ -113,7 +117,7 @@ class Grid1D : public Grid
             m_grid[m_generation * m_gridWidth + m_gridWidth / 2] = 1;
         }
         
-        uint8_t GetNeighbor(const size_t cell_index) const override {
+        uint8_t GetNeighbors(const size_t cell_index) const {
             size_t rightIndex = (cell_index+1)%m_gridWidth;
             size_t leftIndex = (cell_index+m_gridWidth-1)%m_gridWidth;
             uint8_t right = m_grid[m_generation * m_gridWidth + rightIndex];
@@ -139,7 +143,7 @@ class Grid1D : public Grid
             if (m_generation==m_gridHeight-1)
                 return;
             for (std::size_t i = 0; i < m_gridWidth; i++) {
-                const uint8_t n = GetNeighbor(i);
+                const uint8_t n = GetNeighbors(i);
                 uint8_t r = m_rule & (1 << n);
                 m_grid[(m_generation+1) * m_gridWidth + i] = (r != 0) ? 1 : 0;
             }
@@ -219,24 +223,29 @@ class Grid2D : public Grid
                 } 
             }
 
-            uint8_t GetNeighbor(const size_t cell_index) const override {
-                uint8_t neighbor = 0;
+            uint8_t GetNeighborsInState(const Neighborhood nbh, const size_t cell_index, const uint8_t state) const {
+                uint8_t nrNeighbor = 0;
                 const int cell_line = cell_index/m_gridWidth; 
                 const int cell_column = cell_index%m_gridWidth;
                 for (int x = -1 ; x <= 1 ; x++){
                     for (int y = -1 ; y <= 1 ; y++){
-                        if (x == 0 && y == 0)
-                            continue;
+                        
+                        switch(nbh) {
+                            case Neighborhood::VonNeumann :
+                                if (abs(x) == abs(y)) continue;
+                            case Neighborhood::Moore :
+                                if (x == 0 && y == 0) continue;
+                        }
                         
                         const int neighbor_line = cell_line+y;
                         const int neighbor_column = cell_column+x;
                         if (neighbor_line < 0 || neighbor_line >= m_gridHeight || neighbor_column < 0 || neighbor_column >= m_gridWidth)
                             continue;
-                        if (m_current_grid[neighbor_line * m_gridWidth + neighbor_column]) 
-                            neighbor++;
+                        if (m_current_grid[neighbor_line * m_gridWidth + neighbor_column] == state) 
+                            nrNeighbor++;
                     }
                 }
-                return neighbor;
+                return nrNeighbor;
             }
             
             void Draw(const PixelPosition cameraPosition) const override {
@@ -282,7 +291,7 @@ class GameOfLife : public Grid2D
 
         void Update() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                const int nr_alive = GetNeighbor(i);
+                const int nr_alive = GetNeighborsInState(Neighborhood::Moore, i, 1);
                 if (m_current_grid[i]){ // Living cell 
                     if (m_survive[nr_alive]){
                         m_next_grid[i] = 1;
@@ -398,26 +407,6 @@ class GreenbergHastings : public Grid2D
             Randomize();
         }
 
-        uint8_t GetNeighbor(const size_t cell_index) const override { // Von Neumann neighborhood (should not be here)
-            unsigned int neighbor = 0;
-            const int cell_line = cell_index/m_gridWidth; 
-            const int cell_column = cell_index%m_gridWidth;
-            
-            for (int x = -1 ; x <= 1 ; x++){
-                for (int y = -1 ; y <= 1 ; y++){
-                    if (abs(x) == abs(y)) 
-                        continue;
-
-                    const int neighbor_line = cell_line+y;
-                    const int neighbor_column = cell_column+x;
-                    if (neighbor_line < 0 || neighbor_line >= m_gridHeight || neighbor_column < 0 || neighbor_column >= m_gridWidth)
-                        continue;
-                    if (m_current_grid[neighbor_line * m_gridWidth + neighbor_column] == 1) neighbor++;
-                }
-            }
-            return neighbor;
-        }
-
         // Will be removed. The only difference with Grid2D::Draw is that the color of a cell is chosen according to its state
         void Draw(const PixelPosition cameraPosition) const override {
             SDL_Renderer* window_renderer = m_window.GetRenderer();
@@ -441,12 +430,69 @@ class GreenbergHastings : public Grid2D
                 else if (m_current_grid[i] == 2)
                     m_next_grid[i] = 0;
                 else {
-                    if (GetNeighbor(i) >= 1) 
+                    if (GetNeighborsInState(Neighborhood::VonNeumann, i, 1) >= 1) 
                         m_next_grid[i] = 1;
                     else m_next_grid[i] = 0;
                 }
             }
             m_current_grid = m_next_grid;    
+        }
+
+        void SetColorGUI() override {
+            float cellColor[3] = {m_otherColor.r/255.f, m_otherColor.g/255.f, m_otherColor.b/255.f};
+            ImGui::ColorEdit3("Cell color (state 2)", cellColor);
+            m_otherColor = {static_cast<Uint8>(cellColor[0]*255), static_cast<Uint8>(cellColor[1]*255), static_cast<Uint8>(cellColor[2]*255)};
+        }
+};
+
+// https://en.wikipedia.org/wiki/Forest-fire_model
+class ForestFire : public Grid2D
+{       
+    private:
+        float m_p, m_f; // Probability (%) for an empty cell to become a tree (m_p) and for a tree to ignite (m_f)
+        SDL_Color m_otherColor; // Will not be here
+        
+    public:
+        ForestFire(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cell_color, const SDL_Color& otherColor):
+        Grid2D(window, gridWidth, gridHeight, cell_color), m_otherColor(otherColor), m_p(0.5), m_f(0.01)
+        {
+            Randomize();
+        }
+
+        // Will be removed. The only difference with Grid2D::Draw is that the color of a cell is chosen according to its state
+        void Draw(const PixelPosition cameraPosition) const override {
+            SDL_Renderer* window_renderer = m_window.GetRenderer();
+            for (std::size_t i = 0; i < m_current_grid.size(); i++) {
+                const uint8_t currentCell = m_current_grid[i];
+                if (currentCell != 0){
+                    if (currentCell == 1) m_window.SetRenderColor(m_cellColor);
+                    else if (currentCell == 2) m_window.SetRenderColor(m_otherColor);
+                    const int line = i/m_gridWidth; 
+                    const int column = i%m_gridWidth;
+                    SDL_Rect cell_rect = {column*m_cellSize - cameraPosition.x, line*m_cellSize - cameraPosition.y, m_cellSize, m_cellSize};
+                    SDL_RenderFillRect(window_renderer, &cell_rect);
+                }
+            }
+        }
+
+        void Update() override {
+            for (std::size_t i = 0; i < m_current_grid.size(); i++) {
+                if (m_current_grid[i] == 0 && rand() < m_p * (RAND_MAX/100.0))
+                    m_next_grid[i] = 1;
+                else if (m_current_grid[i] == 1)
+                    if (GetNeighborsInState(Neighborhood::VonNeumann, i, 2) >= 1 || rand() < m_f * (RAND_MAX/100.0)) 
+                        m_next_grid[i] = 2;
+                    else m_next_grid[i] = 1;
+                else {
+                    m_next_grid[i] = 0;
+                }
+            }
+            m_current_grid = m_next_grid;    
+        }
+
+        void SetAutomataGUI() override {
+            ImGui::SliderFloat("P", &m_p, 0., 1.);
+            ImGui::SliderFloat("F", &m_f, 0., 1.);
         }
 
         void SetColorGUI() override {

@@ -44,6 +44,10 @@ void SwitchAutomata(const SetAutomata e)
             ca = std::make_unique<GreenbergHastings>(window, gridWidth, gridHeight, previousCellColor, SDL_Color{240, 25, 50});
             break;
         }
+        case SetAutomata::ForestFire: {
+            ca = std::make_unique<ForestFire>(window, gridWidth, gridHeight, previousCellColor, SDL_Color{240, 25, 50});
+            break;
+        }
         default:{
             std::cout << "Undefined\n"; // Will throw an error
             break;

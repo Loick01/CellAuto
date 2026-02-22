@@ -1,6 +1,7 @@
 #pragma once 
 
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -55,7 +56,7 @@ class Grid
         virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) = 0;
         virtual void Empty() = 0;
         virtual void Fill() = 0;
-        virtual void Randomize() = 0;
+        virtual void RandomizeGrid() = 0;
         virtual void Resize() = 0;
         virtual void SetAutomataGUI() {} // Parameters used in this function will be available in Tab: Automata
         virtual void SetColorGUI() {}; // Parameters used in this function will be available in Tab: Colors
@@ -113,11 +114,11 @@ class Grid1D : public Grid
             m_grid[m_generation * m_gridWidth + m_gridWidth / 2] = 1;
         }
         
-        uint8_t GetNeighbors(const size_t cell_index) const {
-            size_t rightIndex = (cell_index+1)%m_gridWidth;
-            size_t leftIndex = (cell_index+m_gridWidth-1)%m_gridWidth;
+        uint8_t GetNeighbors(const size_t cellIndex) const {
+            size_t rightIndex = (cellIndex+1)%m_gridWidth;
+            size_t leftIndex = (cellIndex+m_gridWidth-1)%m_gridWidth;
             uint8_t right = m_grid[m_generation * m_gridWidth + rightIndex];
-            uint8_t current = m_grid[m_generation * m_gridWidth + cell_index];
+            uint8_t current = m_grid[m_generation * m_gridWidth + cellIndex];
             uint8_t left = m_grid[m_generation * m_gridWidth + leftIndex];
             return right << 2 | current << 1 | left;
         }
@@ -165,7 +166,7 @@ class Grid1D : public Grid
             m_generation = 0;
         }
 
-        void Randomize() override {
+        void RandomizeGrid() override {
             for (std::size_t i = 0; i < m_gridWidth; i++){
                 unsigned int r = rand()%100;
                 m_grid[i] = r < m_density ? 1 : 0;
@@ -188,11 +189,19 @@ class Grid2D : public Grid
         std::vector<uint8_t> m_next_grid;
         int m_nrState;
 
+        void ImGuiColorPicker(const char* label, const size_t colorIndex) {
+            SDL_Color& c = m_cellColors[colorIndex];
+            float values[3] = {c.r/255.f, c.g/255.f, c.b/255.f};
+            ImGui::ColorEdit3(label, values);
+            c = {static_cast<Uint8>(values[0]*255), static_cast<Uint8>(values[1]*255), static_cast<Uint8>(values[2]*255)};
+        }
+
     public:
         Grid2D(Window& window, const int gridWidth, const int gridHeight, const int nrState) : 
         Grid(window, gridWidth, gridHeight), m_nrState(nrState)
         {
             m_cellColors.resize(m_nrState-1);
+            RandomizeColors();
             Resize();
             std::srand(std::time({}));
             m_lastCell = {-1, -1}; // Unvalid cell
@@ -207,25 +216,41 @@ class Grid2D : public Grid
             return m_current_grid;
         }
         
-        void Empty() override{
+        void Empty() override {
             std::fill(m_current_grid.begin(), m_current_grid.end(), 0);
         }
 
-        void Fill() override{
+        void Fill() override {
             std::fill(m_current_grid.begin(), m_current_grid.end(), 1);
         }
 
-        void Randomize() override{
+        void RandomizeGrid() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 unsigned int r = rand()%100;
-                m_current_grid[i] = r < m_density ? 1 + rand()%(m_nrState-1) : 0;
+                m_current_grid[i] = r < m_density ? rand()%m_nrState : 0; // 0 can also be generated (for example, cyclic CA produce better result with uniform distribution  ) 
             } 
         }
 
-        uint8_t GetNeighborsInState(const Neighborhood nbh, const size_t cell_index, const uint8_t state) const {
+        void RandomizeColors() {
+            for (unsigned int i = 0 ; i < m_cellColors.size() ; i++){
+                SDL_Color& c = m_cellColors[i];
+                c = {static_cast<Uint8>(rand()%255), static_cast<Uint8>(rand()%255), static_cast<Uint8>(rand()%255)};
+            }
+        }
+
+        void InterpolateColors(const SDL_Color& srcColor, const SDL_Color& dstColor) {
+            for (unsigned int i = 1 ; i < m_cellColors.size()-1 ; i++){
+                const float t = (float)i/m_cellColors.size(); 
+                m_cellColors[i].r = srcColor.r + (dstColor.r-srcColor.r)*t;
+                m_cellColors[i].g = srcColor.g + (dstColor.g-srcColor.g)*t;
+                m_cellColors[i].b = srcColor.b + (dstColor.b-srcColor.b)*t;
+            }
+        }
+
+        uint8_t GetNeighborsInState(const Neighborhood nbh, const size_t cellIndex, const uint8_t state) const {
             uint8_t nrNeighbor = 0;
-            const int cell_line = cell_index/m_gridWidth; 
-            const int cell_column = cell_index%m_gridWidth;
+            const int cell_line = cellIndex/m_gridWidth; 
+            const int cell_column = cellIndex%m_gridWidth;
             for (int x = -1 ; x <= 1 ; x++){
                 for (int y = -1 ; y <= 1 ; y++){
                     
@@ -271,12 +296,17 @@ class Grid2D : public Grid
         }
 
         void SetColorGUI() override {
-            for (unsigned int i = 0 ; i < m_cellColors.size() ; i++){
-                SDL_Color& c = m_cellColors[i];
-                float clr[3] = {c.r/255.f, c.g/255.f, c.b/255.f};
-                ImGui::ColorEdit3(("State " + std::to_string(i+1) + " color").c_str(), clr);
-                c = {static_cast<Uint8>(clr[0]*255), static_cast<Uint8>(clr[1]*255), static_cast<Uint8>(clr[2]*255)};
-            }
+            ImGuiColorPicker("Source color for interpolation", 0);
+            ImGuiColorPicker("Destination color for interpolation", m_cellColors.size()-1);
+
+            if (ImGui::Button("Interpolate cell colors")) // Background color (used when cell state = 0) should be the source color ?
+                InterpolateColors(m_cellColors.front(), m_cellColors.back());
+
+            if (ImGui::Button("Randomize cell colors"))
+                RandomizeColors();
+
+            for (unsigned int i = 0 ; i < m_cellColors.size() ; i++)
+                ImGuiColorPicker(("State " + std::to_string(i+1) + " color").c_str(), i);
         }
 };
 
@@ -296,7 +326,7 @@ class GameOfLife : public Grid2D
             for (int i : survive)
                 m_survive[i] = true;
             
-            Randomize();
+            RandomizeGrid();
         }
 
         void Update() override {
@@ -490,7 +520,75 @@ class Cyclic : public Grid2D
         }
 
         void SetAutomataGUI() override {
-            ImGui::SliderInt("Number of states", &m_nrState, 1, 20);
+            if (ImGui::SliderInt("Number of states", &m_nrState, 1, 25)){ // If the max state becomes too big, the grid may no longer evolve
+                m_cellColors.resize(m_nrState-1);
+                RandomizeColors();
+                Empty();
+            }
             ImGui::SliderInt("Threshold", &m_threshold, 0, 8);
+        }
+};
+
+// https://webbox.lafayette.edu/~reiterc/mvq/hodgepodge/withj_hodgepodge.pdf
+// https://softologyblog.wordpress.com/2017/02/04/the-belousov-zhabotinsky-reaction-and-the-hodgepodge-machine/
+class Hodgepodge : public Grid2D
+{      
+    private:
+        int m_k1, m_k2, m_g;
+
+        unsigned int GetSumStateNeighborhood(const size_t cellIndex){ // Should not be here
+            unsigned int sum = 0;
+
+            const int cell_line = cellIndex/m_gridWidth; 
+            const int cell_column = cellIndex%m_gridWidth;
+            for (int x = -1 ; x <= 1 ; x++){
+                for (int y = -1 ; y <= 1 ; y++){
+                    const int neighbor_line = cell_line+y;
+                    const int neighbor_column = cell_column+x;
+                    if (neighbor_line < 0 || neighbor_line >= m_gridHeight || neighbor_column < 0 || neighbor_column >= m_gridWidth)
+                        continue;
+                    sum += m_current_grid[neighbor_line * m_gridWidth + neighbor_column];
+                }
+            }
+            return sum;
+        }
+
+    public:
+        Hodgepodge(Window& window, const int gridWidth, const int gridHeight, const int nrState, const int k1, const int k2, const int g):
+        Grid2D(window, gridWidth, gridHeight, nrState), m_k1(k1), m_k2(k2), m_g(g)
+        {
+            Empty();
+        }
+
+        void Update() override {
+            for (std::size_t i = 0; i < m_current_grid.size(); i++) {
+                const uint8_t currentState = m_current_grid[i];
+                if (currentState == m_nrState-1)
+                    m_next_grid[i] = 0;
+                else if (currentState == 0){
+                    const uint8_t nrHealthy = GetNeighborsInState(Neighborhood::Moore, i, 0); 
+                    const uint8_t nrIll = GetNeighborsInState(Neighborhood::Moore, i, m_nrState-1); 
+                    const uint8_t nrInfected = 8 - nrHealthy - nrIll;
+                    m_next_grid[i] = std::floor(nrInfected/(float)m_k1) + std::floor(nrIll/(float)m_k2);
+                } else {
+                    const uint8_t nrHealthy = GetNeighborsInState(Neighborhood::Moore, i, 0); 
+                    const uint8_t nrIll = GetNeighborsInState(Neighborhood::Moore, i, m_nrState-1); 
+                    const uint8_t nrInfected = 8 - nrHealthy - nrIll;
+                    const unsigned int s = GetSumStateNeighborhood(i);
+                    m_next_grid[i] = std::floor(s/(nrInfected+nrIll+1))+m_g;
+                }
+            }
+            m_current_grid = m_next_grid;   
+        }
+
+        void SetAutomataGUI() override {
+            if (ImGui::SliderInt("Number of states", &m_nrState, 1, 256)){
+                m_cellColors.resize(m_nrState-1);
+                RandomizeColors();
+                Empty();
+            }
+            ImGui::SliderInt("K1", &m_k1, 1, 9);
+            ImGui::SliderInt("K2", &m_k2, 1, 9);
+            ImGui::SliderInt("G", &m_g, 0, 100);
         }
 };

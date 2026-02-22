@@ -31,7 +31,9 @@ void ImGuiLayer::SetFrame()
 
     if (ImGui::BeginTabBar("TabBar")){
         if (ImGui::BeginTabItem("Automata")){
-            const char* items[] = { "Elementary", "Game of Life", "Langton's Ant", "Greenberg-Hastings", "Forest fire model", "Cyclic"}; // Must be the same order than SetAutomata
+            const char* items[] = { "Elementary", "Game of Life", "Langton's Ant", 
+                                    "Greenberg-Hastings", "Forest fire model", 
+                                    "Cyclic", "Hodgepodge machine"}; // Must be the same order than SetAutomata
 
             if (ImGui::BeginCombo("Automata", items[m_selectedAutomata])){
                 for (int i = 0; i < IM_ARRAYSIZE(items); i++){
@@ -49,8 +51,8 @@ void ImGuiLayer::SetFrame()
             if (ImGui::Button("Empty")) 
                 m_grid->Empty();
             ImGui::SameLine();
-            if (ImGui::Button("Randomize")) 
-                m_grid->Randomize();
+            if (ImGui::Button("RandomizeGrid")) 
+                m_grid->RandomizeGrid();
             int& gridDensity = m_grid->GetDensity();
             ImGui::SliderInt("Density (%)", &gridDensity, 0, 100);
 

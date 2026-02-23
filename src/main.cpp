@@ -55,6 +55,10 @@ void SwitchAutomata(const SetAutomata e)
             ca = std::make_unique<Hodgepodge>(window, gridWidth, gridHeight, 100, 2, 3, 20);
             break;
         }
+        case SetAutomata::AbelianSandpile: {
+            ca = std::make_unique<AbelianSandpile>(window, gridWidth, gridHeight, 4);
+            break;
+        }
         default:{
             std::cout << "Undefined\n"; // Will throw an error
             break;

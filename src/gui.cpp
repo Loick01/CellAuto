@@ -31,13 +31,13 @@ void ImGuiLayer::SetFrame()
 
     if (ImGui::BeginTabBar("TabBar")){
         if (ImGui::BeginTabItem("Automata")){
-            const char* items[] = { "Elementary", "Game of Life", "Langton's Ant", 
+            const char* automataList[] = { "Elementary", "Game of Life", "Langton's Ant", 
                                     "Greenberg-Hastings", "Forest fire model", 
-                                    "Cyclic", "Hodgepodge machine"}; // Must be the same order than SetAutomata
+                                    "Cyclic", "Hodgepodge machine", "Abelian sandpile"}; // Must be the same order than SetAutomata
 
-            if (ImGui::BeginCombo("Automata", items[m_selectedAutomata])){
-                for (int i = 0; i < IM_ARRAYSIZE(items); i++){
-                    if (ImGui::Selectable(items[i])){
+            if (ImGui::BeginCombo("Automata", automataList[m_selectedAutomata])){
+                for (int i = 0; i < IM_ARRAYSIZE(automataList); i++){
+                    if (ImGui::Selectable(automataList[i])){
                         m_selectedAutomata = i;
                         Notify(static_cast<SetAutomata>(m_selectedAutomata));
                     }

@@ -185,12 +185,13 @@ class Grid1D : public Grid
         }
 };
 
+template<typename T>
 class Grid2D : public Grid
 {
     protected:    
         std::vector<SDL_Color> m_cellColors; // n colors for n+1 states. 0 is the state a cell has when it doesn't have to be rendered
-        std::vector<uint8_t> m_current_grid;
-        std::vector<uint8_t> m_next_grid;
+        std::vector<T> m_current_grid;
+        std::vector<T> m_next_grid;
         Neighborhood m_nbhType;
         int m_nrState;
 
@@ -252,7 +253,7 @@ class Grid2D : public Grid
             }
         }
 
-        uint8_t GetNeighborsInState(const size_t cellIndex, const uint8_t state) const {
+        uint8_t GetNeighborsInState(const size_t cellIndex, const T state) const {
             uint8_t nrNeighbor = 0;
             const int cellLine = cellIndex/m_gridWidth; 
             const int cellColumn = cellIndex%m_gridWidth;
@@ -279,7 +280,7 @@ class Grid2D : public Grid
         void Draw(const PixelPosition cameraPosition) const override {
             SDL_Renderer* window_renderer = m_window.GetRenderer();
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                const uint8_t cellState = m_current_grid[i];
+                const T cellState = m_current_grid[i];
                 if (cellState != 0){
                     m_window.SetRenderColor(m_cellColors[cellState-1]);
                     const int line = i/m_gridWidth; 
@@ -294,7 +295,7 @@ class Grid2D : public Grid
             Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition);
             if (!IsLastCell(position) && IsPositionValid(position)){
                 m_lastCell = position;
-                const uint8_t current = m_current_grid[GetIndexFromPosition(position)];
+                const T current = m_current_grid[GetIndexFromPosition(position)];
                 m_current_grid[GetIndexFromPosition(position)] = current==0; // 0 --> 1 ; 1 --> 0 ; 2 --> 0
             }
         }
@@ -315,7 +316,7 @@ class Grid2D : public Grid
 };
 
 // https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
-class GameOfLife : public Grid2D 
+class GameOfLife : public Grid2D<uint8_t> 
 {
     private:
         std::array<bool, 9> m_birth{false}, m_survive{false}; 
@@ -385,7 +386,7 @@ class GameOfLife : public Grid2D
 };
 
 // https://en.wikipedia.org/wiki/Langton%27s_ant
-class LangtonAnt : public Grid2D
+class LangtonAnt : public Grid2D<uint8_t> 
 {
     private:
         std::vector<Grid2DPosition> m_ant_positions;
@@ -439,7 +440,7 @@ class LangtonAnt : public Grid2D
 };
 
 // https://en.wikipedia.org/wiki/Greenberg%E2%80%93Hastings_cellular_automaton
-class GreenbergHastings : public Grid2D
+class GreenbergHastings : public Grid2D<uint8_t> 
 {       
     public:
         GreenbergHastings(Window& window, const int gridWidth, const int gridHeight):
@@ -465,7 +466,7 @@ class GreenbergHastings : public Grid2D
 };
 
 // https://en.wikipedia.org/wiki/Forest-fire_model
-class ForestFire : public Grid2D
+class ForestFire : public Grid2D<uint8_t> 
 {       
     private:
         float m_p, m_f; // Probability (%) for an empty cell to become a tree (m_p) and for a tree to ignite (m_f)
@@ -499,7 +500,7 @@ class ForestFire : public Grid2D
 };
 
 // https://en.wikipedia.org/wiki/Cyclic_cellular_automaton
-class Cyclic : public Grid2D
+class Cyclic : public Grid2D<uint8_t> 
 {      
     private:
         int m_threshold;
@@ -535,7 +536,7 @@ class Cyclic : public Grid2D
 
 // https://webbox.lafayette.edu/~reiterc/mvq/hodgepodge/withj_hodgepodge.pdf
 // https://softologyblog.wordpress.com/2017/02/04/the-belousov-zhabotinsky-reaction-and-the-hodgepodge-machine/
-class Hodgepodge : public Grid2D
+class Hodgepodge : public Grid2D<uint8_t> 
 {      
     private:
         int m_k1, m_k2, m_g;
@@ -598,7 +599,7 @@ class Hodgepodge : public Grid2D
 };
 
 // https://en.wikipedia.org/wiki/Abelian_sandpile_model
-class AbelianSandpile : public Grid2D // m_next_grid is unused
+class AbelianSandpile : public Grid2D<unsigned int> // m_next_grid will not be used
 {      
     private:
         Grid2DPosition m_addingPosition;
@@ -629,9 +630,14 @@ class AbelianSandpile : public Grid2D // m_next_grid is unused
             if (m_current_grid[addingIndex] >= m_threshold)
                 topplingCellPosition.push(m_addingPosition);
 
+            int cnt = 0;
             while (!topplingCellPosition.empty()){
                 const Grid2DPosition currentPosition = topplingCellPosition.front();
                 topplingCellPosition.pop();
+
+                if (m_current_grid[GetIndexFromPosition(currentPosition)] < m_threshold)
+                    continue;
+
                 m_current_grid[GetIndexFromPosition(currentPosition)] -= m_threshold;
                 
                 // This for-loop should not be here
@@ -645,7 +651,6 @@ class AbelianSandpile : public Grid2D // m_next_grid is unused
 
                         const unsigned int neighborIndex = GetIndexFromPosition(neighborPosition);
                         m_current_grid[neighborIndex]++;
-                        if (m_current_grid[neighborIndex] >= 250) std::cout << "Exceed\n";
                         if (m_current_grid[neighborIndex] >= m_threshold)
                             topplingCellPosition.push(neighborPosition);
                     }
@@ -654,11 +659,12 @@ class AbelianSandpile : public Grid2D // m_next_grid is unused
         }
 
         void SetAutomataGUI() override {
-            if (ImGui::SliderInt("Threshold", &m_threshold, 1, 20)){ // The threshold is maxState
-                m_cellColors.resize(m_threshold);
-                RandomizeColors();
-                Empty();
-            }
+            // A toppling cell must lose exactly as many grains as it distributes to its neighbors. For now I remove this slider
+            // if (ImGui::SliderInt("Threshold", &m_threshold, 4, 8)){ // The threshold is maxState
+            //     m_cellColors.resize(m_threshold);
+            //     RandomizeColors();
+            //     Empty();
+            // }
 
             if (ImGui::RadioButton("Add in the middle of the grid", !m_isRandomAdded)){
                 m_isRandomAdded = false;

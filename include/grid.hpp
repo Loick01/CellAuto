@@ -25,6 +25,7 @@ class Grid
     protected: 
         Window& m_window;
         Grid2DPosition m_lastCell; // Last interacted cell with the mouse (should not nbe here)
+        Neighborhood m_nbhType;
         int m_cellSize;
         int m_gridWidth;
         int m_gridHeight;
@@ -50,7 +51,7 @@ class Grid
             return position.x == m_lastCell.x && position.y == m_lastCell.y;
         }
 
-        bool IsPositionValid(const Grid2DPosition& position){
+        bool IsPositionValid(const Grid2DPosition& position) const {
             return position.y >= 0 && position.y < m_gridHeight && position.x >= 0 && position.x < m_gridWidth;
         }
 
@@ -90,6 +91,14 @@ class Grid
 
         int& GetDensity() {
             return m_density;
+        }
+        
+        int GetNeighborhood() const {
+            return (int)m_nbhType;
+        }
+        
+        void SetNeighborhood(const Neighborhood nbhType) {
+            m_nbhType = nbhType;
         }
 };
 
@@ -192,7 +201,6 @@ class Grid2D : public Grid
         std::vector<SDL_Color> m_cellColors; // n colors for n+1 states. 0 is the state a cell has when it doesn't have to be rendered
         std::vector<T> m_current_grid;
         std::vector<T> m_next_grid;
-        Neighborhood m_nbhType;
         int m_nrState;
 
         void ImGuiColorPicker(const char* label, const size_t colorIndex) {
@@ -204,8 +212,9 @@ class Grid2D : public Grid
 
     public:
         Grid2D(Window& window, Neighborhood nbhType, const int gridWidth, const int gridHeight, const int nrState) : 
-        Grid(window, gridWidth, gridHeight), m_nrState(nrState), m_nbhType(nbhType)
+        Grid(window, gridWidth, gridHeight), m_nrState(nrState)
         {
+            m_nbhType = nbhType;
             m_cellColors.resize(m_nrState-1);
             RandomizeColors();
             Resize();
@@ -268,7 +277,7 @@ class Grid2D : public Grid
                     }
 
                     const Grid2DPosition neighborPosition = {cellColumn+x, cellLine+y};
-                    if (neighborPosition.y < 0 || neighborPosition.y >= m_gridHeight || neighborPosition.x < 0 || neighborPosition.x >= m_gridWidth)
+                    if (!IsPositionValid(neighborPosition))
                         continue;
                     if (m_current_grid[GetIndexFromPosition(neighborPosition)] == state) 
                         nrNeighbor++;
@@ -640,7 +649,7 @@ class AbelianSandpile : public Grid2D<unsigned int> // m_next_grid will not be u
 
                 m_current_grid[GetIndexFromPosition(currentPosition)] -= m_threshold;
                 
-                // This for-loop should not be here
+                // This for-loop should not be here (same as Grid2D::GetNeighborsInState)
                 for (int x = -1 ; x <= 1 ; x++){ 
                     for (int y = -1 ; y <= 1 ; y++){
                         if (abs(x) == abs(y)) continue; // VonNeumann neighborhood

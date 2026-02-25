@@ -28,6 +28,7 @@ class ImGuiLayer : public Notifier<SetAutomata>
 
         Camera& m_camera;
         int m_selectedAutomata;
+        int m_selectedNbh;
 
     public:
         ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid, Camera& camera);

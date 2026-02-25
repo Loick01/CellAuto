@@ -1,7 +1,8 @@
 #include "gui.hpp"
 
 ImGuiLayer::ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid, Camera& camera):
-m_windowRenderer(window.GetRenderer()), m_stepTimer(stepTimer), m_bgColor(bgColor), m_grid(grid), m_selectedAutomata(1), m_camera(camera)
+m_windowRenderer(window.GetRenderer()), m_stepTimer(stepTimer), m_bgColor(bgColor), m_grid(grid), 
+m_selectedAutomata(1), m_camera(camera), m_selectedNbh(m_grid->GetNeighborhood())
 {
     Init(window);
 }
@@ -31,7 +32,7 @@ void ImGuiLayer::SetFrame()
 
     if (ImGui::BeginTabBar("TabBar")){
         if (ImGui::BeginTabItem("Automata")){
-            const char* automataList[] = { "Elementary", "Game of Life", "Langton's Ant", 
+            const char* automataList[] = {"Elementary", "Game of Life", "Langton's Ant", 
                                     "Greenberg-Hastings", "Forest fire model", 
                                     "Cyclic", "Hodgepodge machine", "Abelian sandpile"}; // Must be the same order than SetAutomata
 
@@ -55,6 +56,18 @@ void ImGuiLayer::SetFrame()
                 m_grid->RandomizeGrid();
             int& gridDensity = m_grid->GetDensity();
             ImGui::SliderInt("Density (%)", &gridDensity, 0, 100);
+
+            const char* neighborhoodList[] = {"VonNeumann", "Moore"}; // Must be the same order than Neighborhood (grid.hpp)
+
+            if (ImGui::BeginCombo("Neighborhood type", neighborhoodList[m_selectedNbh])){
+                for (int i = 0; i < IM_ARRAYSIZE(neighborhoodList); i++){
+                    if (ImGui::Selectable(neighborhoodList[i])){
+                        m_selectedNbh = i;
+                        m_grid->SetNeighborhood(static_cast<Neighborhood>(m_selectedNbh));
+                    }
+                }
+                ImGui::EndCombo();
+            }
 
             m_grid->SetAutomataGUI();
             
@@ -103,4 +116,5 @@ void ImGuiLayer::Draw()
 
 void ImGuiLayer::SetGrid(Grid* grid){
     m_grid = grid;
+    m_selectedNbh = m_grid->GetNeighborhood();
 }

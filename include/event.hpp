@@ -5,6 +5,7 @@
 
 #include <SDL2/SDL.h>
 
+#include "camera.hpp"
 #include "gui.hpp"
 #include "type.hpp"
 
@@ -42,13 +43,15 @@ class EventController
         
     public:
         bool HandleWindowEvents() const;
-        virtual void HandleEvents() = 0;
+        virtual void HandleStateEvents() = 0;
+        virtual void HandlePolledEvents() = 0;
         void PollAllEvents();
 };
 
 class GridEventController: public EventController
 {
     private:
+        Camera& m_camera;
         ActionController* m_action_controller;
         PixelPosition m_current_mouse;
         bool m_is_paused;
@@ -56,10 +59,11 @@ class GridEventController: public EventController
         bool m_is_moving;
 
     public:
-        GridEventController();
+        GridEventController(Camera& camera);
         PixelPosition GetMouse() const;
         bool GetIsPaused() const;
         bool GetIsSet() const;
         bool GetIsMoving() const;
-        void HandleEvents() override;
+        void HandleStateEvents() override;
+        void HandlePolledEvents() override;
 };

@@ -19,6 +19,8 @@ class Camera
         Camera(const Window& window, const Grid* grid);
         
         PixelPosition GetPosition() const;
+        float GetZoom() const;
+        void AddZoom(const float z);
         void LookAtGrid(const PixelPosition& gridCenter);
         void Move(const bool isMoving, const PixelPosition& mousePosition);
 };

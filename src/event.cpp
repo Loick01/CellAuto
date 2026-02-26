@@ -76,7 +76,8 @@ void EventController::PollAllEvents()
     }
 }
 
-GridEventController::GridEventController()
+GridEventController::GridEventController(Camera& camera):
+m_camera(camera)
 {
     m_action_controller = new KeyboardMouseActionController();
     m_is_paused = false;
@@ -105,7 +106,7 @@ bool GridEventController::GetIsMoving() const
     return m_is_moving;
 }
 
-void GridEventController::HandleEvents()
+void GridEventController::HandleStateEvents()
 {
     if (m_break_events){
         m_is_set = false;
@@ -118,4 +119,18 @@ void GridEventController::HandleEvents()
     }
     m_is_set = m_action_controller->IsSetAction(); // Add/Remove a cell
     m_is_moving = m_action_controller->IsMovingCameraAction();
+}
+
+void GridEventController::HandlePolledEvents() 
+{
+    for (SDL_Event event : m_events){
+        switch (event.type){
+            case SDL_MOUSEWHEEL:
+                if (event.wheel.y > 0)
+                    m_camera.AddZoom(0.1f);
+                else   
+                    m_camera.AddZoom(-0.1f);
+                break;
+        }
+    }
 }

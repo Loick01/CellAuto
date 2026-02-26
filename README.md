@@ -37,6 +37,7 @@ make
 + **Spacebar :** Pause/Resume
 + **Middle click :** Move the camera
 + **Left click :** Make cells alive/dead
++ **Mouse wheel :** Zoom in/out
 + **Escape :** Close the window
 
 ### Demo videos
@@ -49,6 +50,13 @@ make
       </a>
       <br>
       <strong>Game of Life, Langton's Ant and 1D Automata</strong>
+    </td>
+    <td align="center">
+      <a href="https://www.youtube.com/watch?v=bSjD-3EoghI">
+        <img src="https://img.youtube.com/vi/bSjD-3EoghI/maxresdefault.jpg" height="200">
+      </a>
+      <br>
+      <strong>Life-like Automata</strong>
     </td>
   </tr>
 </table>
@@ -71,7 +79,7 @@ make
 </table>
 
 <p align="center">
-<em>The available automata can be selected from the drop-down list. Once selected, you can modify their rules (as shown below)</em>
+<em>The available automata can be selected from the drop-down list in Automata tab. Once selected, you can modify their rules (as shown below)</em>
 </p>
 <table align="center">
   <tr>

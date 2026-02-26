@@ -11,6 +11,16 @@ PixelPosition Camera::GetPosition() const
     return m_position;
 }
 
+float Camera::GetZoom() const 
+{
+    return m_zoom;
+}
+
+void Camera::AddZoom(const float z)
+{
+    m_zoom += z;
+}
+
 void Camera::LookAtGrid(const PixelPosition& gridCenter)
 {
     m_position.x = -1 * (m_windowSize.x/2 - gridCenter.x); 

@@ -56,7 +56,7 @@ class Grid
         }
 
     public:
-        virtual void Draw(const PixelPosition position) const = 0;
+        virtual void Draw(const PixelPosition position, const float zoom) const = 0;
         virtual void Update() = 0;
         virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) = 0;
         virtual void Empty() = 0;
@@ -136,7 +136,7 @@ class Grid1D : public Grid
             return right << 2 | current << 1 | left;
         }
 
-        void Draw(const PixelPosition cameraPosition) const override {
+        void Draw(const PixelPosition cameraPosition, const float zoom) const override {
             m_window.SetRenderColor(m_cellColor);
             SDL_Renderer* window_renderer = m_window.GetRenderer();
             for (std::size_t i = 0; i < m_grid.size(); i++) {
@@ -242,7 +242,7 @@ class Grid2D : public Grid
         void RandomizeGrid() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 unsigned int r = rand()%100;
-                m_current_grid[i] = r < m_density ? rand()%m_nrState : 0; // 0 can also be generated (for example, cyclic CA produce better result with uniform distribution  ) 
+                m_current_grid[i] = r < m_density ? rand()%m_nrState : 0; // 0 can also be generated (for example, cyclic CA produce better result with uniform distribution) 
             } 
         }
 
@@ -286,15 +286,16 @@ class Grid2D : public Grid
             return nrNeighbor;
         }
 
-        void Draw(const PixelPosition cameraPosition) const override {
+        void Draw(const PixelPosition cameraPosition, const float zoom) const override {
             SDL_Renderer* window_renderer = m_window.GetRenderer();
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 const T cellState = m_current_grid[i];
                 if (cellState != 0){
+                    const int finalSize = zoom*m_cellSize;
                     m_window.SetRenderColor(m_cellColors[cellState-1]);
                     const int line = i/m_gridWidth; 
                     const int column = i%m_gridWidth;
-                    SDL_Rect cell_rect = {column*m_cellSize - cameraPosition.x, line*m_cellSize - cameraPosition.y, m_cellSize, m_cellSize};
+                    SDL_Rect cell_rect = {column*finalSize - cameraPosition.x, line*finalSize - cameraPosition.y, finalSize, finalSize};
                     SDL_RenderFillRect(window_renderer, &cell_rect);
                 }
             }
@@ -325,6 +326,7 @@ class Grid2D : public Grid
 };
 
 // https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+// https://conwaylife.com/wiki/List_of_Life-like_rules
 class GameOfLife : public Grid2D<uint8_t> 
 {
     private:

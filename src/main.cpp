@@ -13,7 +13,6 @@
 Window window("CellAuto", {50,50,50});
 float stepTimer = 0.5f;
 
-GridEventController eventController;
 const int gridWidth = 64;
 const int gridHeight = 64;
 std::unique_ptr<Grid> ca = std::make_unique<GameOfLife>(window, gridWidth, gridHeight, 
@@ -69,8 +68,7 @@ void SwitchAutomata(const SetAutomata e)
 
 int main()
 {
-    
-    GridEventController eventController;
+    GridEventController eventController(camera);
 
     bool gameloop = true;
     Time time;
@@ -82,7 +80,8 @@ int main()
         window.ClearRenderer();
         eventController.PollAllEvents();
         gameloop = eventController.HandleWindowEvents();
-        eventController.HandleEvents();
+        eventController.HandlePolledEvents(); // Should not be here ?
+        eventController.HandleStateEvents();
 
         camera.Move(eventController.GetIsMoving(), eventController.GetMouse());
         if (eventController.GetIsPaused()){
@@ -98,7 +97,7 @@ int main()
             }
         }
 
-        ca->Draw(camera.GetPosition());
+        ca->Draw(camera.GetPosition(), camera.GetZoom());
         gui.Draw();
         window.UpdateRender();
     }

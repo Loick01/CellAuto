@@ -11,7 +11,7 @@
 
 enum class SetAutomata
 {
-    Elementary, GoL, Langton, GreenbergHastings, ForestFire, Cyclic, Hodgepodge, AbelianSandpile
+    Elementary, GoL, Langton, GreenbergHastings, ForestFire, Cyclic, Hodgepodge, AbelianSandpile, Wireworld
 };
 
 class ImGuiLayer : public Notifier<SetAutomata>
@@ -29,11 +29,13 @@ class ImGuiLayer : public Notifier<SetAutomata>
         Camera& m_camera;
         int m_selectedAutomata;
         int m_selectedNbh;
+        int m_selectedState; 
 
     public:
         ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid, Camera& camera);
         ~ImGuiLayer();
 
+        int GetSelectedState() const;
         void SetGrid(Grid* grid);
         void Draw();
 };

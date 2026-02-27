@@ -58,6 +58,10 @@ void SwitchAutomata(const SetAutomata e)
             ca = std::make_unique<AbelianSandpile>(window, gridWidth, gridHeight, 4);
             break;
         }
+        case SetAutomata::Wireworld: {
+            ca = std::make_unique<Wireworld>(window, gridWidth, gridHeight);
+            break;
+        }
         default:{
             std::cout << "Undefined\n"; // Will throw an error
             break;
@@ -86,7 +90,7 @@ int main()
         camera.Move(eventController.GetIsMoving(), eventController.GetMouse());
         if (eventController.GetIsPaused()){
             if (eventController.GetIsSet()){
-                ca->Set(eventController.GetMouse(), camera.GetPosition());
+                ca->Set(eventController.GetMouse(), camera.GetPosition(), gui.GetSelectedState());
             }
         }else{
             time.Update();

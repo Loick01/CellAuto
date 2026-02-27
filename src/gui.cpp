@@ -2,7 +2,7 @@
 
 ImGuiLayer::ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid, Camera& camera):
 m_windowRenderer(window.GetRenderer()), m_stepTimer(stepTimer), m_bgColor(bgColor), m_grid(grid), 
-m_selectedAutomata(1), m_camera(camera), m_selectedNbh(m_grid->GetNeighborhood())
+m_selectedAutomata(1), m_camera(camera), m_selectedNbh(m_grid->GetNeighborhood()), m_selectedState(1)
 {
     Init(window);
 }
@@ -27,14 +27,15 @@ void ImGuiLayer::SetFrame()
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
-    ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
     ImGui::Begin("CellAuto");
 
     if (ImGui::BeginTabBar("TabBar")){
         if (ImGui::BeginTabItem("Automata")){
             const char* automataList[] = {"Elementary", "Game of Life", "Langton's Ant", 
                                     "Greenberg-Hastings", "Forest fire model", 
-                                    "Cyclic", "Hodgepodge machine", "Abelian sandpile"}; // Must be the same order than SetAutomata
+                                    "Cyclic", "Hodgepodge machine", "Abelian sandpile",
+                                    "Wireworld"}; // Must be the same order than SetAutomata
 
             if (ImGui::BeginCombo("Automata", automataList[m_selectedAutomata])){
                 for (int i = 0; i < IM_ARRAYSIZE(automataList); i++){
@@ -68,7 +69,8 @@ void ImGuiLayer::SetFrame()
                 }
                 ImGui::EndCombo();
             }
-
+            
+            ImGui::SliderInt("Selected state", &m_selectedState, 0, 8); // Should be restricted with Grid2D::m_nrState
             m_grid->SetAutomataGUI();
             
             ImGui::EndTabItem();
@@ -105,6 +107,11 @@ void ImGuiLayer::SetFrame()
     }
 
     ImGui::End();
+}
+
+int ImGuiLayer::GetSelectedState() const 
+{
+    return m_selectedState;
 }
 
 void ImGuiLayer::Draw()

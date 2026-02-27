@@ -58,7 +58,7 @@ class Grid
     public:
         virtual void Draw(const PixelPosition position, const float zoom) const = 0;
         virtual void Update() = 0;
-        virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) = 0;
+        virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const int newState) = 0;
         virtual void Empty() = 0;
         virtual void Fill() = 0;
         virtual void RandomizeGrid() = 0;
@@ -160,11 +160,11 @@ class Grid1D : public Grid
             ++m_generation;
         }
 
-        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) override {
+        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const int newState) override {
             Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition);
             if (!IsLastCell(position) && IsPositionValid(position)){
                 m_lastCell = position;
-                m_grid[GetIndexFromPosition(position)] ^= 1; // 2 states only
+                m_grid[GetIndexFromPosition(position)] = newState;
                 m_generation = position.y; // Evolution will resume from the last modified line
             }
         }
@@ -301,12 +301,12 @@ class Grid2D : public Grid
             }
         }
 
-        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition) override {
+        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const int newState) override {
             Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition);
             if (!IsLastCell(position) && IsPositionValid(position)){
                 m_lastCell = position;
                 const T current = m_current_grid[GetIndexFromPosition(position)];
-                m_current_grid[GetIndexFromPosition(position)] = current==0; // 0 --> 1 ; 1 --> 0 ; 2 --> 0
+                m_current_grid[GetIndexFromPosition(position)] = newState;
             }
         }
 
@@ -683,5 +683,43 @@ class AbelianSandpile : public Grid2D<unsigned int> // m_next_grid will not be u
             }
             if (ImGui::RadioButton("Add randomly", m_isRandomAdded))
                 m_isRandomAdded = true;
+        }
+};
+
+// https://en.wikipedia.org/wiki/Wireworld
+class Wireworld : public Grid2D<uint8_t> 
+{      
+    private:
+
+    public:
+        Wireworld(Window& window, const int gridWidth, const int gridHeight):
+        Grid2D(window, Neighborhood::Moore, gridWidth, gridHeight, 4)
+        {
+            Empty();
+        }
+
+        void Update() override {
+            for (std::size_t i = 0; i < m_current_grid.size(); i++) {
+                const uint8_t currentState = m_current_grid[i];
+                switch (currentState) {
+                    case 1 : // Electron head
+                        m_next_grid[i] = 2;
+                        break;
+                    case 2 : // Electron tail
+                        m_next_grid[i] = 3;
+                        break;
+                    case 3 : { // Conductor
+                        const uint8_t nrElectronHeadNeighbor = GetNeighborsInState(i, 1);
+                        if (nrElectronHeadNeighbor == 1 || nrElectronHeadNeighbor == 2)
+                            m_next_grid[i] = 1;
+                        else
+                            m_next_grid[i] = 3;
+                        break;
+                    }
+                    default :
+                        m_next_grid[i] = 0;
+                }
+            }
+            m_current_grid = m_next_grid;  
         }
 };

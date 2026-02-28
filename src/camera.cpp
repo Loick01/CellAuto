@@ -16,6 +16,11 @@ float Camera::GetZoom() const
     return m_zoom;
 }
 
+void Camera::AddPosition(const PixelPosition add)
+{
+    m_position += add;
+}
+
 void Camera::AddZoom(const float z)
 {
     m_zoom += z;

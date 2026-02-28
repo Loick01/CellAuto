@@ -37,9 +37,10 @@ class Grid
             ComputeCellSize();
         }
         
-        Grid2DPosition GetGridPositionFromMouse(const PixelPosition& mouse, const PixelPosition& cameraPosition){
-            const int column = (mouse.x + cameraPosition.x) / m_cellSize; 
-            const int line = (mouse.y + cameraPosition.y) / m_cellSize;
+        Grid2DPosition GetGridPositionFromMouse(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom){
+            const int finalSize = m_cellSize * cameraZoom;
+            const int column = (mouse.x + cameraPosition.x) / finalSize; 
+            const int line = (mouse.y + cameraPosition.y) / finalSize;
             return Grid2DPosition{column, line};
         }
 
@@ -58,7 +59,7 @@ class Grid
     public:
         virtual void Draw(const PixelPosition position, const float zoom) const = 0;
         virtual void Update() = 0;
-        virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const int newState) = 0;
+        virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom, const int newState) = 0;
         virtual void Empty() = 0;
         virtual void Fill() = 0;
         virtual void RandomizeGrid() = 0;
@@ -160,8 +161,8 @@ class Grid1D : public Grid
             ++m_generation;
         }
 
-        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const int newState) override {
-            Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition);
+        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom, const int newState) override {
+            Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition, cameraZoom);
             if (!IsLastCell(position) && IsPositionValid(position)){
                 m_lastCell = position;
                 m_grid[GetIndexFromPosition(position)] = newState;
@@ -301,8 +302,8 @@ class Grid2D : public Grid
             }
         }
 
-        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const int newState) override {
-            Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition);
+        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom, const int newState) override {
+            Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition, cameraZoom);
             if (!IsLastCell(position) && IsPositionValid(position)){
                 m_lastCell = position;
                 const T current = m_current_grid[GetIndexFromPosition(position)];

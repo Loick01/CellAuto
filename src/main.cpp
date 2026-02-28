@@ -90,7 +90,7 @@ int main()
         camera.Move(eventController.GetIsMoving(), eventController.GetMouse());
         if (eventController.GetIsPaused()){
             if (eventController.GetIsSet()){
-                ca->Set(eventController.GetMouse(), camera.GetPosition(), gui.GetSelectedState());
+                ca->Set(eventController.GetMouse(), camera.GetPosition(), camera.GetZoom(), gui.GetSelectedState());
             }
         }else{
             time.Update();

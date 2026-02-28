@@ -126,10 +126,14 @@ void GridEventController::HandlePolledEvents()
     for (SDL_Event event : m_events){
         switch (event.type){
             case SDL_MOUSEWHEEL:
+                //const PixelPosition beforePosition = ();
                 if (event.wheel.y > 0)
                     m_camera.AddZoom(0.1f);
                 else   
                     m_camera.AddZoom(-0.1f);
+                // const PixelPosition afterPosition = GetMouseScenePosition();
+                // const PixelPosition delta = (beforePosition-afterPosition)*m_camera.GetZoom();
+                // m_camera.AddPosition(delta); // Zoom on mouse cursor
                 break;
         }
     }

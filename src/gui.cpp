@@ -103,6 +103,13 @@ void ImGuiLayer::SetFrame()
             ImGui::EndTabItem();
         }
 
+        if (ImGui::BeginTabItem("Camera")){
+            const PixelPosition& cameraPosition = m_camera.GetPosition();
+            ImGui::Text("Position : %d, %d", cameraPosition.x, cameraPosition.y);
+            ImGui::Text("Zoom : %2.2f", m_camera.GetZoom());
+            ImGui::EndTabItem();
+        }
+
         ImGui::EndTabBar();
     }
 

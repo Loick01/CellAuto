@@ -20,6 +20,7 @@ class Camera
         
         PixelPosition GetPosition() const;
         float GetZoom() const;
+        void AddPosition(const PixelPosition add);
         void AddZoom(const float z);
         void LookAtGrid(const PixelPosition& gridCenter);
         void Move(const bool isMoving, const PixelPosition& mousePosition);

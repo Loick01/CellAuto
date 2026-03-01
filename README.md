@@ -121,7 +121,12 @@ This automaton represents an ant that moves on a grid. At each step, if the cell
 <strong>Greenberg-Hastings</strong><br>
 <strong>State :</strong> 3<br>
 <strong>Parameters :</strong> None<br>
-TODO
+Each cell is assigned one of three states : resting (0), excited (1), refractory (2). The state of each cell is updated by the following rules : 
+  <ul>
+    <li>An excited cell becomes refractory</li>
+    <li>A refractory cell becomes resting</li>
+    <li>A resting cell becomes excited if at least one of its neighbors is excited, otherwise it will stay in resting state</li> 
+  </ul>
 </div>
 </div>
 
@@ -131,7 +136,7 @@ TODO
 <strong>Forest-fire model</strong><br>
 <strong>State :</strong> 3<br>
 <strong>Parameters :</strong> P [0., 1.], F [0., 1.]<br>
-TODO
+A cell can be empty (0), occupied by a tree (1), or burning (2). At each iteration, burning cells turn into empty, and a tree burns if at least one neighbor is burning. In addition, a tree could ignite with probability F, and an empty cell may grow a tree with probability P.
 </div>
 </div>
 
@@ -141,7 +146,7 @@ TODO
 <strong>Cyclic automata</strong><br>
 <strong>State :</strong> Between 1 and 25<br>
 <strong>Parameters :</strong> Threshold [0, 8]<br>
-TODO
+Each cell can take one of n states (from 0 to n-1). At each generation, a cell in state k advances to state (k+1) mod n if at least one of its neighbors is in that next state, otherwise it remains in state k. Thus, the next state for a cell in state n-1 is 0.
 </div>
 </div>
 
@@ -151,7 +156,7 @@ TODO
 <strong>Abelian sandpile model</strong><br>
 <strong>State :</strong> 4<br>
 <strong>Parameters :</strong> Adding position (random or grid center)<br>
-TODO
+Each cell contains a number of grains (state n means n grain(s)). At each iteration, any cell with 4 grains topples : it loses 4 grains, and each of its (Von Neumann) neighbors receives one grain. This process repeats until all cells have less than 4 grains. All topplings at a given iteration are considered simultaneous.
 </div>
 </div>
 
@@ -161,7 +166,7 @@ TODO
 <strong>Wireworld</strong><br>
 <strong>State :</strong> 4<br>
 <strong>Parameters :</strong> None<br>
-TODO
+Each cell can be in one of four states : empty (0), electron head (1), electron tail (2), or conductor (3). At each iteration, electron heads become electron tails, electron tails become conductors, and conductors become electron heads if exactly one or two of their neighbors are electron heads, otherwise they remain conductors.
 </div>
 </div>
 

@@ -63,6 +63,7 @@ make
 
 ### Automata settings
 
+<!--
 <table align="center">
   <tr>
     <td align="center">
@@ -77,97 +78,113 @@ make
     </td>
   </tr>
 </table>
-
 <br>
+-->
+
 <p align="center">
 <em>The available automata can be selected from the drop-down list in the Automata tab. You can choose the neighborhood type (Moore or Von Neumann). In addition, some have also specific parameters (as shown below)</em>
 </p>
 
-<div style="display: flex; flex-direction: column; gap: 15px;">
+<table>
+  <tr>
+    <td>
+      <img src="./screenshot/elementary_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Elementary cellular automata</strong><br>
+      <strong>State :</strong> 2<br>
+      <strong>Parameters :</strong> Rule [0-255]<br>
+      One-dimensional cellular automata (the rendered grid is obtained by stacking the generations). The new state of a cell is determined with the state (from the previous generation) of the same cell and its left and right neighbors. Each of the 8 possible three-cell neighborhood configurations is mapped to either 0 or 1 by a fixed 8-bit rule.
+    </td>
+  </tr>
 
-<div style="display: flex; align-items: center; gap: 15px;">
-<img src="./screenshot/elementary_setting.png" height="200">
-<div>
-<strong>Elementary cellular automata</strong><br>
-<strong>State :</strong> 2<br>
-<strong>Parameters :</strong> Rule [0-255]<br>
-One-dimensional cellular automata (the rendered grid is obtained by stacking the generations). The new state of a cell is determined with the state (from the previous generation) of the same cell and its left and right neighbors. Each of the 8 possible three-cell neighborhood configurations is mapped to either 0 or 1 by a fixed 8-bit rule.
-</div>
-</div>
+  <tr>
+    <td>
+      <img src="./screenshot/gol_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Game of Life</strong><br>
+      <strong>State :</strong> 2<br>
+      <strong>Parameters :</strong> Birth (numbers of alive neighbors a dead cell needs to become alive), Survive (numbers of alive neighbors a living cell needs to stay alive)<br>
+      At each iteration, a dead cell becomes alive if the number of living neighbors is in Birth, and a living cell survives if the number of living neighbors is in Survive. All other cells die or remain dead.
+    </td>
+  </tr>
 
-<div style="display: flex; align-items: center; gap: 15px;">
-<img src="./screenshot/gol_setting.png" height="200">
-<div>
-<strong>Game of Life</strong><br>
-<strong>State :</strong> 2<br>
-<strong>Parameters :</strong> Birth (numbers of alive neighbors a dead cell needs to become alive), Survive (numbers of alive neighbors a living cell needs to stay alive)<br>
-At each iteration, a dead cell becomes alive if the number of living neighbors is in Birth, and a living cell survives if the number of living neighbors is in Survive. All other cells die or remain dead.
-</div>
-</div>
+  <tr>
+    <td>
+      <img src="./screenshot/langton_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Langton's Ant</strong><br>
+      <strong>State :</strong> 2<br>
+      <strong>Parameters :</strong> None<br>
+      This automaton represents an ant that moves on a grid. At each step, if the cell is alive, the ant turns 90° clockwise, makes the cell dead, and moves forward one cell. If the cell is dead, the ant turns 90° counterclockwise, makes the cell alive, and moves forward one cell.
+    </td>
+  </tr>
 
-<div style="display: flex; align-items: center; gap: 15px;">
-<img src="./screenshot/langton_setting.png" height="200">
-<div>
-<strong>Langton's Ant</strong><br>
-<strong>State :</strong> 2<br>
-<strong>Parameters :</strong> None<br>
-This automaton represents an ant that moves on a grid. At each step, if the cell is alive, the ant turns 90° clockwise, makes the cell dead, and moves forward one cell. If the cell is dead, the ant turns 90° counterclockwise, makes the cell alive, and moves forward one cell.
-</div>
-</div>
+  <tr>
+    <td>
+      <img src="./screenshot/greenberg_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Greenberg-Hastings</strong><br>
+      <strong>State :</strong> 3<br>
+      <strong>Parameters :</strong> None<br>
+      Each cell is assigned one of three states : resting (0), excited (1), refractory (2). The state of each cell is updated by the following rules : 
+        <ul>
+          <li>An excited cell becomes refractory</li>
+          <li>A refractory cell becomes resting</li>
+          <li>A resting cell becomes excited if at least one of its neighbors is excited, otherwise it will stay in resting state</li> 
+        </ul>
+    </td>
+  </tr>
 
-<div style="display: flex; align-items: center; gap: 15px;">
-<img src="./screenshot/greenberg_setting.png" height="200">
-<div>
-<strong>Greenberg-Hastings</strong><br>
-<strong>State :</strong> 3<br>
-<strong>Parameters :</strong> None<br>
-Each cell is assigned one of three states : resting (0), excited (1), refractory (2). The state of each cell is updated by the following rules : 
-  <ul>
-    <li>An excited cell becomes refractory</li>
-    <li>A refractory cell becomes resting</li>
-    <li>A resting cell becomes excited if at least one of its neighbors is excited, otherwise it will stay in resting state</li> 
-  </ul>
-</div>
-</div>
+  <tr>
+    <td>
+      <img src="./screenshot/forestfire_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Forest-fire model</strong><br>
+      <strong>State :</strong> 3<br>
+      <strong>Parameters :</strong> P [0., 1.], F [0., 1.]<br>
+      A cell can be empty (0), occupied by a tree (1), or burning (2). At each iteration, burning cells turn into empty, and a tree burns if at least one neighbor is burning. In addition, a tree could ignite with probability F, and an empty cell may grow a tree with probability P.
+    </td>
+  </tr>
 
-<div style="display: flex; align-items: center; gap: 15px;">
-<img src="./screenshot/forestfire_setting.png" height="200">
-<div>
-<strong>Forest-fire model</strong><br>
-<strong>State :</strong> 3<br>
-<strong>Parameters :</strong> P [0., 1.], F [0., 1.]<br>
-A cell can be empty (0), occupied by a tree (1), or burning (2). At each iteration, burning cells turn into empty, and a tree burns if at least one neighbor is burning. In addition, a tree could ignite with probability F, and an empty cell may grow a tree with probability P.
-</div>
-</div>
+  <tr>
+    <td>
+      <img src="./screenshot/cyclic_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Cyclic automata</strong><br>
+      <strong>State :</strong> Between 1 and 25<br>
+      <strong>Parameters :</strong> Threshold [0, 8]<br>
+      Each cell can take one of n states (from 0 to n-1). At each generation, a cell in state k advances to state (k+1) mod n if at least one of its neighbors is in that next state, otherwise it remains in state k. Thus, the next state for a cell in state n-1 is 0.
+    </td>
+  </tr>
 
-<div style="display: flex; align-items: center; gap: 15px;">
-<img src="./screenshot/cyclic_setting.png" height="200">
-<div>
-<strong>Cyclic automata</strong><br>
-<strong>State :</strong> Between 1 and 25<br>
-<strong>Parameters :</strong> Threshold [0, 8]<br>
-Each cell can take one of n states (from 0 to n-1). At each generation, a cell in state k advances to state (k+1) mod n if at least one of its neighbors is in that next state, otherwise it remains in state k. Thus, the next state for a cell in state n-1 is 0.
-</div>
-</div>
+  <tr>
+    <td>
+      <img src="./screenshot/abelian_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Abelian sandpile model</strong><br>
+      <strong>State :</strong> 4<br>
+      <strong>Parameters :</strong> Adding position (random or grid center)<br>
+      Each cell contains a number of grains (state n means n grain(s)). At each iteration, any cell with 4 grains topples : it loses 4 grains, and each of its (Von Neumann) neighbors receives one grain. This process repeats until all cells have less than 4 grains. All topplings at a given iteration are considered simultaneous.
+    </td>
+  </tr>
 
-<div style="display: flex; align-items: center; gap: 15px;">
-<img src="./screenshot/abelian_setting.png" height="200">
-<div>
-<strong>Abelian sandpile model</strong><br>
-<strong>State :</strong> 4<br>
-<strong>Parameters :</strong> Adding position (random or grid center)<br>
-Each cell contains a number of grains (state n means n grain(s)). At each iteration, any cell with 4 grains topples : it loses 4 grains, and each of its (Von Neumann) neighbors receives one grain. This process repeats until all cells have less than 4 grains. All topplings at a given iteration are considered simultaneous.
-</div>
-</div>
-
-<div style="display: flex; align-items: center; gap: 15px;">
-<img src="./screenshot/wireworld_setting.png" height="200">
-<div>
-<strong>Wireworld</strong><br>
-<strong>State :</strong> 4<br>
-<strong>Parameters :</strong> None<br>
-Each cell can be in one of four states : empty (0), electron head (1), electron tail (2), or conductor (3). At each iteration, electron heads become electron tails, electron tails become conductors, and conductors become electron heads if exactly one or two of their neighbors are electron heads, otherwise they remain conductors.
-</div>
-</div>
-
-</div>
+  <tr>
+    <td>
+      <img src="./screenshot/wireworld_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Wireworld</strong><br>
+      <strong>State :</strong> 4<br>
+      <strong>Parameters :</strong> None<br>
+      Each cell can be in one of four states : empty (0), electron head (1), electron tail (2), or conductor (3). At each iteration, electron heads become electron tails, electron tails become conductors, and conductors become electron heads if exactly one or two of their neighbors are electron heads, otherwise they remain conductors.
+    </td>
+  </tr>
+  
+</table>

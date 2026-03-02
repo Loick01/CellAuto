@@ -31,8 +31,8 @@ class Grid
         int m_gridHeight;
         int m_density; // Used when randomize the grid
 
-        Grid(Window& window, const int gridWidth, const int gridHeight) :
-        m_window(window), m_gridWidth(gridWidth), m_gridHeight(gridHeight), m_density(25)
+        Grid(Window& window) :
+        m_window(window), m_gridWidth(64), m_gridHeight(64), m_density(25) // Default value should not be here ?
         {
             ComputeCellSize();
         }
@@ -114,8 +114,8 @@ class Grid1D : public Grid
         size_t m_generation;
 
     public:
-        Grid1D(Window& window, const int gridWidth, const int gridHeight, const SDL_Color& cellColor, const uint8_t rule):
-        Grid(window, gridWidth, gridHeight), m_cellColor(cellColor), m_generation(0), m_rule(rule) {
+        Grid1D(Window& window, const SDL_Color& cellColor, const uint8_t rule):
+        Grid(window), m_cellColor(cellColor), m_generation(0), m_rule(rule) {
             Resize();
             Initial();
         }
@@ -212,8 +212,8 @@ class Grid2D : public Grid
         }
 
     public:
-        Grid2D(Window& window, Neighborhood nbhType, const int gridWidth, const int gridHeight, const int nrState) : 
-        Grid(window, gridWidth, gridHeight), m_nrState(nrState)
+        Grid2D(Window& window, Neighborhood nbhType, const int nrState) : 
+        Grid(window), m_nrState(nrState)
         {
             m_nbhType = nbhType;
             m_cellColors.resize(m_nrState-1);
@@ -334,9 +334,9 @@ class GameOfLife : public Grid2D<uint8_t>
         std::array<bool, 9> m_birth{false}, m_survive{false}; 
 
     public :
-        GameOfLife(Window& window, const int gridWidth, const int gridHeight,
+        GameOfLife(Window& window,
             std::vector<int> birth, std::vector<int> survive):
-        Grid2D(window, Neighborhood::Moore, gridWidth, gridHeight, 2)
+        Grid2D(window, Neighborhood::Moore, 2)
         {
             for (int i : birth)
                 m_birth[i] = true;
@@ -421,8 +421,8 @@ class LangtonAnt : public Grid2D<uint8_t>
         }
         
     public:
-        LangtonAnt(Window& window, const int gridWidth, const int gridHeight, const Grid2DPosition initial_position, const unsigned int nr_ant=1):
-        Grid2D(window, Neighborhood::VonNeumann, gridWidth, gridHeight, 2), m_ant_positions(nr_ant, initial_position)
+        LangtonAnt(Window& window, const Grid2DPosition initial_position, const unsigned int nr_ant=1):
+        Grid2D(window, Neighborhood::VonNeumann, 2), m_ant_positions(nr_ant, initial_position)
         {
             m_directions[0] = {0, 1}; m_directions[1] = {1, 0}; m_directions[2] = {0, -1}; m_directions[3] = {-1, 0};
             for (unsigned int i = 0 ; i < nr_ant ; i++)
@@ -455,8 +455,8 @@ class LangtonAnt : public Grid2D<uint8_t>
 class GreenbergHastings : public Grid2D<uint8_t> 
 {       
     public:
-        GreenbergHastings(Window& window, const int gridWidth, const int gridHeight):
-        Grid2D(window, Neighborhood::VonNeumann, gridWidth, gridHeight, 3)
+        GreenbergHastings(Window& window):
+        Grid2D(window, Neighborhood::VonNeumann, 3)
         {
             Empty();
         }
@@ -484,8 +484,8 @@ class ForestFire : public Grid2D<uint8_t>
         float m_p, m_f; // Probability (%) for an empty cell to become a tree (m_p) and for a tree to ignite (m_f)
         
     public:
-        ForestFire(Window& window, const int gridWidth, const int gridHeight, const float p, const float f):
-        Grid2D(window, Neighborhood::VonNeumann, gridWidth, gridHeight, 3), m_p(p), m_f(f)
+        ForestFire(Window& window, const float p, const float f):
+        Grid2D(window, Neighborhood::VonNeumann, 3), m_p(p), m_f(f)
         {
             Empty();
         }
@@ -518,8 +518,8 @@ class Cyclic : public Grid2D<uint8_t>
         int m_threshold;
 
     public:
-        Cyclic(Window& window, const int gridWidth, const int gridHeight, const int nrState, const int threshold):
-        Grid2D(window, Neighborhood::VonNeumann, gridWidth, gridHeight, nrState), m_threshold(threshold)
+        Cyclic(Window& window, const int nrState, const int threshold):
+        Grid2D(window, Neighborhood::VonNeumann, nrState), m_threshold(threshold)
         {
             Empty();
         }
@@ -571,8 +571,8 @@ class Hodgepodge : public Grid2D<uint8_t>
         }
 
     public:
-        Hodgepodge(Window& window, const int gridWidth, const int gridHeight, const int nrState, const int k1, const int k2, const int g):
-        Grid2D(window, Neighborhood::Moore, gridWidth, gridHeight, nrState), m_k1(k1), m_k2(k2), m_g(g)
+        Hodgepodge(Window& window, const int nrState, const int k1, const int k2, const int g):
+        Grid2D(window, Neighborhood::Moore, nrState), m_k1(k1), m_k2(k2), m_g(g)
         {
             Empty();
         }
@@ -619,8 +619,8 @@ class AbelianSandpile : public Grid2D<unsigned int> // m_next_grid will not be u
         bool m_isRandomAdded; // false -> grains are added to the center of the grid, true -> grains are randomly added
 
     public:
-        AbelianSandpile(Window& window, const int gridWidth, const int gridHeight, const int threshold):
-        Grid2D(window, Neighborhood::VonNeumann, gridWidth, gridHeight, threshold+1), m_threshold(threshold), m_isRandomAdded(false)
+        AbelianSandpile(Window& window, const int threshold):
+        Grid2D(window, Neighborhood::VonNeumann, threshold+1), m_threshold(threshold), m_isRandomAdded(false)
         {
             m_addingPosition = {m_gridWidth/2, m_gridHeight/2};
             Empty();
@@ -693,8 +693,8 @@ class Wireworld : public Grid2D<uint8_t>
     private:
 
     public:
-        Wireworld(Window& window, const int gridWidth, const int gridHeight):
-        Grid2D(window, Neighborhood::Moore, gridWidth, gridHeight, 4)
+        Wireworld(Window& window):
+        Grid2D(window, Neighborhood::Moore, 4)
         {
             Empty();
         }

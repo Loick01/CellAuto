@@ -69,7 +69,7 @@ void Application::SwitchAutomata(const SetAutomata e)
             break;
         }
         case SetAutomata::Hodgepodge: {
-            m_grid = std::make_unique<Hodgepodge>(m_window, 100, 2, 3, 20);
+            m_grid = std::make_unique<Hodgepodge>(m_window, 100, 3, 3, 28);
             break;
         }
         case SetAutomata::AbelianSandpile: {

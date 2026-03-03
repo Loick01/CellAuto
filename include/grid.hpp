@@ -287,6 +287,32 @@ class Grid2D : public Grid
             return nrNeighbor;
         }
 
+        // Should be merged with GetNeighborInState
+        uint8_t GetNeighborsBetweenState(const size_t cellIndex, const T lowerState, const T upperState) const {
+            uint8_t nrNeighbor = 0;
+            const int cellLine = cellIndex/m_gridWidth; 
+            const int cellColumn = cellIndex%m_gridWidth;
+            for (int x = -1 ; x <= 1 ; x++){
+                for (int y = -1 ; y <= 1 ; y++){
+                    
+                    switch(m_nbhType) {
+                        case Neighborhood::VonNeumann :
+                            if (abs(x) == abs(y)) continue;
+                        case Neighborhood::Moore :
+                            if (x == 0 && y == 0) continue;
+                    }
+
+                    const Grid2DPosition neighborPosition = {cellColumn+x, cellLine+y};
+                    if (!IsPositionValid(neighborPosition))
+                        continue;
+                    const T currentState = m_current_grid[GetIndexFromPosition(neighborPosition)];
+                    if (currentState >= lowerState && currentState <= upperState) 
+                        nrNeighbor++;
+                }
+            }
+            return nrNeighbor;
+        }
+
         void Draw(const PixelPosition cameraPosition, const float zoom) const override {
             SDL_Renderer* window_renderer = m_window.GetRenderer();
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
@@ -580,19 +606,19 @@ class Hodgepodge : public Grid2D<uint8_t>
         void Update() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 const uint8_t currentState = m_current_grid[i];
-                if (currentState == m_nrState-1)
+                if (currentState == m_nrState-1){
                     m_next_grid[i] = 0;
-                else if (currentState == 0){
-                    const uint8_t nrHealthy = GetNeighborsInState(i, 0); 
+                } else if (currentState == 0){
                     const uint8_t nrIll = GetNeighborsInState(i, m_nrState-1); 
-                    const uint8_t nrInfected = 8 - nrHealthy - nrIll;
-                    m_next_grid[i] = std::floor(nrInfected/(float)m_k1) + std::floor(nrIll/(float)m_k2);
+                    const uint8_t nrInfected = GetNeighborsBetweenState(i, 1, m_nrState-2);
+                    const int newState = nrInfected/m_k1 + nrIll/m_k2;
+                    m_next_grid[i] = std::min(newState, m_nrState-1);
                 } else {
-                    const uint8_t nrHealthy = GetNeighborsInState(i, 0); 
                     const uint8_t nrIll = GetNeighborsInState(i, m_nrState-1); 
-                    const uint8_t nrInfected = 8 - nrHealthy - nrIll;
+                    const uint8_t nrInfected = GetNeighborsBetweenState(i, 1, m_nrState-2);
                     const unsigned int s = GetSumStateNeighborhood(i);
-                    m_next_grid[i] = std::floor(s/(nrInfected+nrIll+1))+m_g;
+                    const int newState = s/(nrInfected+nrIll+1)+m_g;
+                    m_next_grid[i] = std::min(newState, m_nrState-1);
                 }
             }
             m_current_grid = m_next_grid;   

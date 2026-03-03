@@ -35,7 +35,7 @@ void ImGuiLayer::SetFrame()
             const char* automataList[] = {"Elementary", "Game of Life", "Langton's Ant", 
                                     "Greenberg-Hastings", "Forest fire model", 
                                     "Cyclic", "Hodgepodge machine", "Abelian sandpile",
-                                    "Wireworld"}; // Must be the same order than SetAutomata
+                                    "Wireworld", "Falling Sand"}; // Must be the same order than SetAutomata
 
             if (ImGui::BeginCombo("Automata", automataList[m_selectedAutomata])){
                 for (int i = 0; i < IM_ARRAYSIZE(automataList); i++){

@@ -20,11 +20,10 @@ bool Application::Run()
     m_eventController.HandleStateEvents();
 
     m_camera.Move(m_eventController.GetIsMoving(), m_eventController.GetMouse());
-    if (m_eventController.GetIsPaused()){
-        if (m_eventController.GetIsSet()){
-            m_grid->Set(m_eventController.GetMouse(), m_camera.GetPosition(), m_camera.GetZoom(), m_gui.GetSelectedState());
-        }
-    }else{
+    
+    if (m_eventController.GetIsSet())
+        m_grid->Set(m_eventController.GetMouse(), m_camera.GetPosition(), m_camera.GetZoom(), m_gui.GetSelectedState());
+    if (!m_eventController.GetIsPaused()){
         m_time.Update();
         m_timer -= m_time.m_delta_time;
         if (m_timer <= 0.0){
@@ -46,12 +45,11 @@ void Application::SwitchAutomata(const SetAutomata e)
             m_grid = std::make_unique<Grid1D>(m_window, SDL_Color{25, 240, 50}, 150);
             break;
         } 
-        /*
         case SetAutomata::GoL: {
             m_grid = std::make_unique<GameOfLife>(m_window, 
                 std::initializer_list<int>{3}, std::initializer_list<int>{2, 3});
             break;
-        }*/
+        }
         case SetAutomata::Langton: {
             m_grid = std::make_unique<LangtonAnt>(m_window, Grid2DPosition{32, 32}, 1);
             break;
@@ -78,6 +76,10 @@ void Application::SwitchAutomata(const SetAutomata e)
         }
         case SetAutomata::Wireworld: {
             m_grid = std::make_unique<Wireworld>(m_window);
+            break;
+        }
+        case SetAutomata::FallingSand: {
+            m_grid = std::make_unique<FallingSand>(m_window);
             break;
         }
         default:

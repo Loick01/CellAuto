@@ -56,6 +56,10 @@ class Grid
             return position.y >= 0 && position.y < m_gridHeight && position.x >= 0 && position.x < m_gridWidth;
         }
 
+        bool IsIndexValid(const size_t index) const {
+            return index >= 0 && index <= (m_gridWidth*m_gridHeight-1);
+        }
+
     public:
         virtual void Draw(const PixelPosition position, const float zoom) const = 0;
         virtual void Update() = 0;
@@ -716,8 +720,6 @@ class AbelianSandpile : public Grid2D<unsigned int> // m_next_grid will not be u
 // https://en.wikipedia.org/wiki/Wireworld
 class Wireworld : public Grid2D<uint8_t> 
 {      
-    private:
-
     public:
         Wireworld(Window& window):
         Grid2D(window, Neighborhood::Moore, 4)
@@ -748,5 +750,42 @@ class Wireworld : public Grid2D<uint8_t>
                 }
             }
             m_current_grid = m_next_grid;  
+        }
+};
+
+// https://pvigier.github.io/2020/12/12/procedural-death-animation-with-falling-sand-automata.html
+class FallingSand : public Grid2D<uint8_t> 
+{      
+    public:
+        FallingSand(Window& window):
+        Grid2D(window, Neighborhood::Moore, 4)
+        {
+            Empty();
+        }
+
+        void Update() override {
+            for (std::size_t i = m_current_grid.size()-1; i > 0 ; i--) {
+                const uint8_t currentState = m_current_grid[i];
+                switch (currentState) {
+                    case 1 : {
+                        const int belowIndex = i + m_gridWidth;
+                        if (IsIndexValid(belowIndex)){ // Will be improved
+                            if (m_current_grid[belowIndex] == 0){
+                                m_current_grid[i] = 0;
+                                m_current_grid[belowIndex] = 1;
+                            } else if (m_current_grid[belowIndex-1] == 0) {
+                                m_current_grid[i] = 0;
+                                m_current_grid[belowIndex-1] = 1;
+                            } else if (m_current_grid[belowIndex+1] == 0) {
+                                m_current_grid[i] = 0;
+                                m_current_grid[belowIndex+1] = 1;
+                            }
+                        }
+                        break;
+                    }
+                    default : // 0
+                        break;
+                }
+            }
         }
 };

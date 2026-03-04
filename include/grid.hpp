@@ -758,7 +758,7 @@ class FallingSand : public Grid2D<uint8_t>
 {      
     public:
         FallingSand(Window& window):
-        Grid2D(window, Neighborhood::Moore, 4)
+        Grid2D(window, Neighborhood::Moore, 2)
         {
             Empty();
         }
@@ -769,16 +769,22 @@ class FallingSand : public Grid2D<uint8_t>
                 switch (currentState) {
                     case 1 : {
                         const int belowIndex = i + m_gridWidth;
-                        if (IsIndexValid(belowIndex)){ // Will be improved
+                        if (IsIndexValid(belowIndex)){
                             if (m_current_grid[belowIndex] == 0){
                                 m_current_grid[i] = 0;
                                 m_current_grid[belowIndex] = 1;
-                            } else if (m_current_grid[belowIndex-1] == 0) {
-                                m_current_grid[i] = 0;
-                                m_current_grid[belowIndex-1] = 1;
-                            } else if (m_current_grid[belowIndex+1] == 0) {
-                                m_current_grid[i] = 0;
-                                m_current_grid[belowIndex+1] = 1;
+                            } else {
+                                const Grid2DPosition drct = {(rand()%2)*2-1, 0}; // {-1, 0} or {1, 0}
+                                const Grid2DPosition belowPosition = {belowIndex%m_gridWidth, belowIndex/m_gridWidth}; 
+                                const Grid2DPosition belowPositionF = belowPosition + drct;
+                                const Grid2DPosition belowPositionS = belowPosition - drct;
+                                if (IsPositionValid(belowPositionF) && m_current_grid[belowIndex + drct.x] == 0){
+                                    m_current_grid[i] = 0;
+                                    m_current_grid[belowIndex + drct.x] = 1;
+                                }else if (IsPositionValid(belowPositionS) && m_current_grid[belowIndex - drct.x] == 0){
+                                    m_current_grid[i] = 0;
+                                    m_current_grid[belowIndex - drct.x] = 1;
+                                }
                             }
                         }
                         break;

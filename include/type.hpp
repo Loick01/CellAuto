@@ -31,6 +31,10 @@ struct Grid2DPosition
         return Grid2DPosition{x+rhs.x, y+rhs.y};
     }
 
+    Grid2DPosition operator-(Grid2DPosition const& rhs) const{
+        return Grid2DPosition{x-rhs.x, y-rhs.y};
+    }
+
     Grid2DPosition& operator+=(Grid2DPosition const& rhs){
         x += rhs.x;
         y += rhs.y;

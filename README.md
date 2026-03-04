@@ -10,7 +10,7 @@
     <td align="center">
       <img src="./screenshot/gol.gif" height="330"/>
       <br>
-      <strong>Conway's Game of Life</strong>
+      <strong>Game of Life</strong>
     </td>
     <td align="center">
       <img src="./screenshot/langton.gif" height="330"/>
@@ -18,6 +18,52 @@
       <strong>Langton's Ant</strong>
     </td>
   </tr>
+
+  <tr>
+    <td align="center">
+      <img src="./screenshot/forestfire.gif" height="330"/>
+      <br>
+      <strong>Forest-fire model</strong>
+    </td>
+    <td align="center">
+      <img src="./screenshot/cyclic.gif" height="330"/>
+      <br>
+      <strong>Cyclic automata</strong>
+    </td>
+    <td align="center">
+      <img src="./screenshot/hodgepodge.gif" height="330"/>
+      <br>
+      <strong>Hodgepodge Machine</strong>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <img src="./screenshot/abelian.gif" height="330"/>
+      <br>
+      <strong>Abelian sandpile model</strong>
+    </td>
+    <td align="center">
+      <img src="./screenshot/wireworld.gif" height="330"/>
+      <br>
+      <strong>Wireworld</strong>
+    </td>
+    <td align="center">
+      <img src="./screenshot/fallingsand.gif" height="330"/>
+      <br>
+      <strong>Falling sand</strong>
+    </td>
+  </tr>
+
+<!--
+  <tr>
+    <td align="center">
+      <img src="./screenshot/greenberg.gif" height="330"/>
+      <br>
+      <strong>Greenberg-Hasting</strong>
+    </td>
+  </tr>
+-->
 </table>
 
 ### How to compile
@@ -165,6 +211,24 @@ make
 
   <tr>
     <td>
+      <img src="./screenshot/hodgepodge_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Hodgepodge machine</strong><br>
+      <strong>State :</strong> Between 3 and 256<br>
+      <strong>Parameters :</strong> K1 [1, 9], K2 [1, 9], G [0, 100]<br>
+      Each cell can take one of n states : healthy (0), infected (1 to n-2), or ill (n-1). The state of each cell is updated according to the following rules : 
+        <ul>
+          <li>If the cell is ill, it becomes healthy</li>
+          <li>If the cell is healthy, its new state is ⌊A/K1⌋ + ⌊B/K2⌋</li>
+          <li>If the cell is infected, its new state is ⌊S/(A+B+1)⌋+G</li> 
+        </ul>
+      Here, A is the number of infected neighbors, B is the number of ill neighbors, and S is the sum of the states of the cell and its neighbors. ⌊X⌋ means the integer part of X.
+    </td>
+  </tr>
+
+  <tr>
+    <td>
       <img src="./screenshot/abelian_setting.png" width="1300px">
     </td>
     <td style="padding-left: 15px;">
@@ -184,6 +248,18 @@ make
       <strong>State :</strong> 4<br>
       <strong>Parameters :</strong> None<br>
       Each cell can be in one of four states : empty (0), electron head (1), electron tail (2), or conductor (3). At each iteration, electron heads become electron tails, electron tails become conductors, and conductors become electron heads if exactly one or two of their neighbors are electron heads, otherwise they remain conductors.
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <img src="./screenshot/fallingsand_setting.png" width="1300px">
+    </td>
+    <td style="padding-left: 15px;">
+      <strong>Falling sand</strong><br>
+      <strong>State :</strong> 2<br>
+      <strong>Parameters :</strong> None<br>
+      Each cell can be empty or contain a sand grain. At each iteration, for every sand grain, if the cell below is empty, the grain moves down. If the cell below is full but the bottom-left or the bottom-right cell is empty, the sand grain moves to one of them (if both are free, choose randomly).
     </td>
   </tr>
   

@@ -754,11 +754,12 @@ class Wireworld : public Grid2D<uint8_t>
 };
 
 // https://pvigier.github.io/2020/12/12/procedural-death-animation-with-falling-sand-automata.html
+// https://github.com/autoselff/sandbox
 class FallingSand : public Grid2D<uint8_t> 
 {      
     public:
         FallingSand(Window& window):
-        Grid2D(window, Neighborhood::Moore, 2)
+        Grid2D(window, Neighborhood::Moore, 4)
         {
             Empty();
         }
@@ -766,28 +767,51 @@ class FallingSand : public Grid2D<uint8_t>
         void Update() override {
             for (std::size_t i = m_current_grid.size()-1; i > 0 ; i--) {
                 const uint8_t currentState = m_current_grid[i];
+                const int belowIndex = i + m_gridWidth;
                 switch (currentState) {
                     case 1 : {
-                        const int belowIndex = i + m_gridWidth;
                         if (IsIndexValid(belowIndex)){
-                            if (m_current_grid[belowIndex] == 0){
-                                m_current_grid[i] = 0;
+                            if (m_current_grid[belowIndex] == 0 || m_current_grid[belowIndex] == 2){
+                                m_current_grid[i] = m_current_grid[belowIndex];
                                 m_current_grid[belowIndex] = 1;
                             } else {
                                 const Grid2DPosition drct = {(rand()%2)*2-1, 0}; // {-1, 0} or {1, 0}
                                 const Grid2DPosition belowPosition = {belowIndex%m_gridWidth, belowIndex/m_gridWidth}; 
-                                const Grid2DPosition belowPositionF = belowPosition + drct;
-                                const Grid2DPosition belowPositionS = belowPosition - drct;
-                                if (IsPositionValid(belowPositionF) && m_current_grid[belowIndex + drct.x] == 0){
+                                if (IsPositionValid(belowPosition + drct) && m_current_grid[belowIndex + drct.x] == 0){ // Should also test if water
                                     m_current_grid[i] = 0;
                                     m_current_grid[belowIndex + drct.x] = 1;
-                                }else if (IsPositionValid(belowPositionS) && m_current_grid[belowIndex - drct.x] == 0){
+                                }else if (IsPositionValid(belowPosition - drct) && m_current_grid[belowIndex - drct.x] == 0){ // Should also test if water
                                     m_current_grid[i] = 0;
                                     m_current_grid[belowIndex - drct.x] = 1;
                                 }
                             }
                         }
                         break;
+                    }
+                    case 2 : {
+                        if (IsIndexValid(belowIndex)){
+                            if (m_current_grid[belowIndex] == 0){
+                                m_current_grid[i] = 0;
+                                m_current_grid[belowIndex] = 2;
+                            } else {
+                                const Grid2DPosition drct = {(rand()%2)*2-1, 0}; // {-1, 0} or {1, 0}
+                                const Grid2DPosition belowPosition = {belowIndex%m_gridWidth, belowIndex/m_gridWidth}; 
+                                const Grid2DPosition currentPosition = belowPosition + Grid2DPosition{0, -1}; 
+                                if (IsPositionValid(belowPosition + drct) && m_current_grid[belowIndex + drct.x] == 0){
+                                    m_current_grid[i] = 0;
+                                    m_current_grid[belowIndex + drct.x] = 2;
+                                }else if (IsPositionValid(belowPosition - drct) && m_current_grid[belowIndex - drct.x] == 0){
+                                    m_current_grid[i] = 0;
+                                    m_current_grid[belowIndex - drct.x] = 2;
+                                }else if (IsPositionValid(currentPosition + drct) && m_current_grid[i + drct.x] == 0){
+                                    m_current_grid[i] = 0;
+                                    m_current_grid[i + drct.x] = 2;
+                                }else if (IsPositionValid(currentPosition - drct) && m_current_grid[i - drct.x] == 0){
+                                    m_current_grid[i] = 0;
+                                    m_current_grid[i - drct.x] = 2;
+                                }
+                            }
+                        }
                     }
                     default : // 0
                         break;

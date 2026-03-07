@@ -2,7 +2,7 @@
 
 ImGuiLayer::ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid, Camera& camera):
 m_windowRenderer(window.GetRenderer()), m_stepTimer(stepTimer), m_bgColor(bgColor), m_grid(grid), 
-m_selectedAutomata(1), m_camera(camera), m_selectedNbh(m_grid->GetNeighborhood()), m_selectedState(1)
+m_selectedAutomata(1), m_camera(camera), m_selectedNbh(m_grid->GetNeighborhood()), m_selectedState(1), m_setSize(1)
 {
     Init(window);
 }
@@ -71,6 +71,7 @@ void ImGuiLayer::SetFrame()
             }
             
             ImGui::SliderInt("Selected state", &m_selectedState, 0, 8); // Should be restricted with Grid2D::m_nrState
+            ImGui::SliderInt("Set size", &m_setSize, 1, 10);
             m_grid->SetAutomataGUI();
             
             ImGui::EndTabItem();
@@ -119,6 +120,11 @@ void ImGuiLayer::SetFrame()
 int ImGuiLayer::GetSelectedState() const 
 {
     return m_selectedState;
+}
+
+int ImGuiLayer::GetSetSize() const 
+{
+    return m_setSize;
 }
 
 void ImGuiLayer::Draw()

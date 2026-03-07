@@ -105,6 +105,15 @@ make
       <strong>Life-like Automata</strong>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://www.youtube.com/watch?v=1YaUlBjD1TQ">
+        <img src="https://img.youtube.com/vi/1YaUlBjD1TQ/maxresdefault.jpg" height="200">
+      </a>
+      <br>
+      <strong>Cyclic, Wireworld, Hodgepodge, Sandpile and Forest-fire model</strong>
+    </td>
+  </tr>
 </table>
 
 ### Automata settings
@@ -257,9 +266,15 @@ make
     </td>
     <td style="padding-left: 15px;">
       <strong>Falling sand</strong><br>
-      <strong>State :</strong> 2<br>
+      <strong>State :</strong> 4<br>
       <strong>Parameters :</strong> None<br>
-      Each cell can be empty or contain a sand grain. At each iteration, for every sand grain, if the cell below is empty, the grain moves down. If the cell below is full but the bottom-left or the bottom-right cell is empty, the sand grain moves to one of them (if both are free, choose randomly).
+      Each cell can be empty (0) or contain a particle of type sand (1), water (2) or stone (3). At each iteration :
+      <ul>
+        <li>Stone cells never move</li>
+        <li>A sand cell moves down if the cell below is empty or contains water. If the cell below is occupied but the bottom-left or the bottom-right cell is empty or water, the sand moves to one of them (if both are free, choose randomly). In all cases, if the destination cell contains water, the sand and water swap positions.</li>
+        <li>A water cell moves down if the cell below is empty. If the cell below is occupied but the bottom-left or the bottom-right cell is empty, the water moves to one of them (if both are free, choose randomly). If none of these cells are free, but the left or right cell is empty, the water moves horizontally to one of them (if both are free, choose randomly)</li>
+      </ul>
+      Particles can't move outside the grid.
     </td>
   </tr>
   

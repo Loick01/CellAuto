@@ -22,7 +22,7 @@ bool Application::Run()
     m_camera.Move(m_eventController.GetIsMoving(), m_eventController.GetMouse());
     
     if (m_eventController.GetIsSet())
-        m_grid->Set(m_eventController.GetMouse(), m_camera.GetPosition(), m_camera.GetZoom(), m_gui.GetSelectedState());
+        m_grid->Set(m_eventController.GetMouse(), m_camera.GetPosition(), m_camera.GetZoom(), m_gui.GetSelectedState(), m_gui.GetSetSize());
     if (!m_eventController.GetIsPaused()){
         m_time.Update();
         m_timer -= m_time.m_delta_time;

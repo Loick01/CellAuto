@@ -63,7 +63,8 @@ class Grid
     public:
         virtual void Draw(const PixelPosition position, const float zoom) const = 0;
         virtual void Update() = 0;
-        virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom, const int newState) = 0;
+        virtual void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom,
+            const int newState, const int setSize) = 0;
         virtual void Empty() = 0;
         virtual void Fill() = 0;
         virtual void RandomizeGrid() = 0;
@@ -165,11 +166,15 @@ class Grid1D : public Grid
             ++m_generation;
         }
 
-        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom, const int newState) override {
+        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom, const int newState, const int setSize) override {
             Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition, cameraZoom);
             if (!IsLastCell(position) && IsPositionValid(position)){
                 m_lastCell = position;
-                m_grid[GetIndexFromPosition(position)] = newState;
+                for (int i = (setSize-1)/(-2) ; i <= setSize/2 ; i++){
+                    const Grid2DPosition setPosition = position + Grid2DPosition{i, 0};
+                    if (IsPositionValid(setPosition))
+                        m_grid[GetIndexFromPosition(setPosition)] = newState;
+                }
                 m_generation = position.y; // Evolution will resume from the last modified line
             }
         }
@@ -332,12 +337,21 @@ class Grid2D : public Grid
             }
         }
 
-        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom, const int newState) override {
+        void Set(const PixelPosition& mouse, const PixelPosition& cameraPosition, const float cameraZoom, const int newState, const int setSize) override {
             Grid2DPosition position = GetGridPositionFromMouse(mouse, cameraPosition, cameraZoom);
             if (!IsLastCell(position) && IsPositionValid(position)){
                 m_lastCell = position;
-                const T current = m_current_grid[GetIndexFromPosition(position)];
-                m_current_grid[GetIndexFromPosition(position)] = newState;
+                const int startIndex = (setSize-1)/(-2);
+                const int endIndex = setSize/2;
+                for (int i = startIndex ; i <= endIndex ; i++){
+                    for (int j = startIndex ; j <= endIndex ; j++){
+                        const Grid2DPosition setPosition = position + Grid2DPosition{i, j};
+                        if (IsPositionValid(setPosition)){
+                            const T current = m_current_grid[GetIndexFromPosition(setPosition)];
+                            m_current_grid[GetIndexFromPosition(setPosition)] = newState;
+                        }
+                    }
+                }
             }
         }
 
@@ -777,10 +791,10 @@ class FallingSand : public Grid2D<uint8_t>
                             } else {
                                 const Grid2DPosition drct = {(rand()%2)*2-1, 0}; // {-1, 0} or {1, 0}
                                 const Grid2DPosition belowPosition = {belowIndex%m_gridWidth, belowIndex/m_gridWidth}; 
-                                if (IsPositionValid(belowPosition + drct) && m_current_grid[belowIndex + drct.x] == 0){ // Should also test if water
+                                if (IsPositionValid(belowPosition + drct) && m_current_grid[belowIndex + drct.x] == 0){
                                     m_current_grid[i] = 0;
                                     m_current_grid[belowIndex + drct.x] = 1;
-                                }else if (IsPositionValid(belowPosition - drct) && m_current_grid[belowIndex - drct.x] == 0){ // Should also test if water
+                                }else if (IsPositionValid(belowPosition - drct) && m_current_grid[belowIndex - drct.x] == 0){
                                     m_current_grid[i] = 0;
                                     m_current_grid[belowIndex - drct.x] = 1;
                                 }

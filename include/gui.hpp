@@ -30,12 +30,14 @@ class ImGuiLayer : public Notifier<SetAutomata>
         int m_selectedAutomata;
         int m_selectedNbh;
         int m_selectedState; 
+        int m_setSize;
 
     public:
         ImGuiLayer(Window& window, float& stepTimer, SDL_Color& bgColor, Grid* grid, Camera& camera);
         ~ImGuiLayer();
 
         int GetSelectedState() const;
+        int GetSetSize() const;
         void SetGrid(Grid* grid);
         void Draw();
 };

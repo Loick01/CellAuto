@@ -1,10 +1,7 @@
 #pragma once 
 
 #include <array>
-#include <cmath>
-#include <cstdlib>
 #include <ctime>
-#include <iostream>
 #include <queue>
 #include <vector>
 
@@ -24,7 +21,7 @@ class Grid
 {
     protected: 
         Window& m_window;
-        Grid2DPosition m_lastCell; // Last interacted cell with the mouse (should not nbe here)
+        Grid2DPosition m_lastCell; // Last interacted cell with the mouse (should be in EventController)
         Neighborhood m_nbhType;
         int m_cellSize;
         int m_gridWidth;
@@ -69,8 +66,8 @@ class Grid
         virtual void Fill() = 0;
         virtual void RandomizeGrid() = 0;
         virtual void Resize() = 0;
-        virtual void SetAutomataGUI() {} // Parameters used in this function will be available in Tab: Automata
-        virtual void SetColorGUI() {}; // Parameters used in this function will be available in Tab: Colors
+        virtual void SetAutomataGUI() {} // Parameters used in this function will be available in Automata tab
+        virtual void SetColorGUI() {}; // Parameters used in this function will be available in Colors tab
 
         void ComputeCellSize(){ // Will be called when the grid size is modified with ImGui
             const int window_width = m_window.GetWidth();
@@ -237,7 +234,7 @@ class Grid2D : public Grid
             m_next_grid.assign(m_gridWidth*m_gridHeight, 1);
         }
 
-        std::vector<uint8_t> GetGrid() const {
+        std::vector<T> GetGrid() const {
             return m_current_grid;
         }
         
@@ -272,54 +269,52 @@ class Grid2D : public Grid
             }
         }
 
-        uint8_t GetNeighborsInState(const size_t cellIndex, const T state) const {
-            uint8_t nrNeighbor = 0;
-            const int cellLine = cellIndex/m_gridWidth; 
-            const int cellColumn = cellIndex%m_gridWidth;
+        std::vector<T> GetNeighborStates(const Grid2DPosition cellPosition) const { 
+            std::vector<T> neighborStates;
             for (int x = -1 ; x <= 1 ; x++){
                 for (int y = -1 ; y <= 1 ; y++){
                     
                     switch(m_nbhType) {
                         case Neighborhood::VonNeumann :
                             if (abs(x) == abs(y)) continue;
+                            break;
                         case Neighborhood::Moore :
                             if (x == 0 && y == 0) continue;
+                            break;
                     }
 
-                    const Grid2DPosition neighborPosition = {cellColumn+x, cellLine+y};
-                    if (!IsPositionValid(neighborPosition))
-                        continue;
-                    if (m_current_grid[GetIndexFromPosition(neighborPosition)] == state) 
-                        nrNeighbor++;
+                    const Grid2DPosition neighborPosition = cellPosition + Grid2DPosition{x, y};
+                    if (IsPositionValid(neighborPosition))
+                        neighborStates.push_back(m_current_grid[GetIndexFromPosition(neighborPosition)]);
                 }
             }
-            return nrNeighbor;
+            return neighborStates;
         }
 
-        // Should be merged with GetNeighborInState
-        uint8_t GetNeighborsBetweenState(const size_t cellIndex, const T lowerState, const T upperState) const {
-            uint8_t nrNeighbor = 0;
-            const int cellLine = cellIndex/m_gridWidth; 
-            const int cellColumn = cellIndex%m_gridWidth;
-            for (int x = -1 ; x <= 1 ; x++){
-                for (int y = -1 ; y <= 1 ; y++){
-                    
-                    switch(m_nbhType) {
-                        case Neighborhood::VonNeumann :
-                            if (abs(x) == abs(y)) continue;
-                        case Neighborhood::Moore :
-                            if (x == 0 && y == 0) continue;
-                    }
-
-                    const Grid2DPosition neighborPosition = {cellColumn+x, cellLine+y};
-                    if (!IsPositionValid(neighborPosition))
-                        continue;
-                    const T currentState = m_current_grid[GetIndexFromPosition(neighborPosition)];
-                    if (currentState >= lowerState && currentState <= upperState) 
-                        nrNeighbor++;
-                }
+        uint8_t CountNeighborsInState(const int cellIndex, const T state) const {
+            std::vector<T> neighborStates = GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth});
+            uint8_t nr = 0;
+            for (const T cellState : neighborStates){
+                if (cellState == state) nr++;
             }
-            return nrNeighbor;
+            return nr;
+        }
+
+        uint8_t CountNeighborsBetweenState(const int cellIndex, const T lowerState, const T upperState) const {
+            std::vector<T> neighborStates = GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth});
+            uint8_t nr = 0;
+            for (const T cellState : neighborStates){
+                if (cellState >= lowerState && cellState <= upperState) nr++;
+            }
+            return nr;
+        }
+
+        unsigned int GetSumStateNeighborhood(const int cellIndex){
+            std::vector<T> neighborStates = GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth});
+            unsigned int sum = 0;
+            for (const T cellState : neighborStates)
+                sum += cellState;
+            return sum;
         }
 
         void Draw(const PixelPosition cameraPosition, const float zoom) const override {
@@ -359,7 +354,7 @@ class Grid2D : public Grid
             ImGuiColorPicker("Source color for interpolation", 0);
             ImGuiColorPicker("Destination color for interpolation", m_cellColors.size()-1);
 
-            if (ImGui::Button("Interpolate cell colors")) // Background color (used when cell state = 0) should be the source color ?
+            if (ImGui::Button("Interpolate cell colors"))
                 InterpolateColors(m_cellColors.front(), m_cellColors.back());
 
             if (ImGui::Button("Randomize cell colors"))
@@ -392,7 +387,7 @@ class GameOfLife : public Grid2D<uint8_t>
 
         void Update() override {
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
-                const int nr_alive = GetNeighborsInState(i, 1);
+                const int nr_alive = CountNeighborsInState(i, 1);
                 if (m_current_grid[i]){ // Living cell 
                     if (m_survive[nr_alive]){
                         m_next_grid[i] = 1;
@@ -484,7 +479,7 @@ class LangtonAnt : public Grid2D<uint8_t>
                     TurnLeft(i);
                 }
                 UpdatePosition(antPosition, m_directions[m_ant_directions[i]]); // Move forward one unit
-                m_current_grid[index] ^= 1; // Or m_next_grid
+                m_current_grid[index] ^= 1;
             }
         }
 
@@ -512,7 +507,7 @@ class GreenbergHastings : public Grid2D<uint8_t>
                 else if (m_current_grid[i] == 2)
                     m_next_grid[i] = 0;
                 else {
-                    if (GetNeighborsInState(i, 1) >= 1) 
+                    if (CountNeighborsInState(i, 1) >= 1) 
                         m_next_grid[i] = 1;
                     else m_next_grid[i] = 0;
                 }
@@ -539,7 +534,7 @@ class ForestFire : public Grid2D<uint8_t>
                 if (m_current_grid[i] == 0 && rand() < m_p * (RAND_MAX/100.0))
                     m_next_grid[i] = 1;
                 else if (m_current_grid[i] == 1)
-                    if (GetNeighborsInState(i, 2) >= 1 || rand() < m_f * (RAND_MAX/100.0)) 
+                    if (CountNeighborsInState(i, 2) >= 1 || rand() < m_f * (RAND_MAX/100.0)) 
                         m_next_grid[i] = 2;
                     else m_next_grid[i] = 1;
                 else {
@@ -572,7 +567,7 @@ class Cyclic : public Grid2D<uint8_t>
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 const uint8_t currentState = m_current_grid[i];
                 const uint8_t nextState = (currentState+1)%m_nrState;
-                if (GetNeighborsInState(i, nextState) >= m_threshold)
+                if (CountNeighborsInState(i, nextState) >= m_threshold)
                     m_next_grid[i] = nextState;
                 else
                     m_next_grid[i] = currentState;
@@ -597,23 +592,6 @@ class Hodgepodge : public Grid2D<uint8_t>
     private:
         int m_k1, m_k2, m_g;
 
-        unsigned int GetSumStateNeighborhood(const size_t cellIndex){ // Should not be here
-            unsigned int sum = 0;
-
-            const int cellLine = cellIndex/m_gridWidth; 
-            const int cellColumn = cellIndex%m_gridWidth;
-            for (int x = -1 ; x <= 1 ; x++){
-                for (int y = -1 ; y <= 1 ; y++){
-                    const int neighbor_line = cellLine+y;
-                    const int neighbor_column = cellColumn+x;
-                    if (neighbor_line < 0 || neighbor_line >= m_gridHeight || neighbor_column < 0 || neighbor_column >= m_gridWidth)
-                        continue;
-                    sum += m_current_grid[neighbor_line * m_gridWidth + neighbor_column];
-                }
-            }
-            return sum;
-        }
-
     public:
         Hodgepodge(Window& window, const int nrState, const int k1, const int k2, const int g):
         Grid2D(window, Neighborhood::Moore, nrState), m_k1(k1), m_k2(k2), m_g(g)
@@ -627,13 +605,13 @@ class Hodgepodge : public Grid2D<uint8_t>
                 if (currentState == m_nrState-1){
                     m_next_grid[i] = 0;
                 } else if (currentState == 0){
-                    const uint8_t nrIll = GetNeighborsInState(i, m_nrState-1); 
-                    const uint8_t nrInfected = GetNeighborsBetweenState(i, 1, m_nrState-2);
+                    const uint8_t nrIll = CountNeighborsInState(i, m_nrState-1); 
+                    const uint8_t nrInfected = CountNeighborsBetweenState(i, 1, m_nrState-2);
                     const int newState = nrInfected/m_k1 + nrIll/m_k2;
                     m_next_grid[i] = std::min(newState, m_nrState-1);
                 } else {
-                    const uint8_t nrIll = GetNeighborsInState(i, m_nrState-1); 
-                    const uint8_t nrInfected = GetNeighborsBetweenState(i, 1, m_nrState-2);
+                    const uint8_t nrIll = CountNeighborsInState(i, m_nrState-1); 
+                    const uint8_t nrInfected = CountNeighborsBetweenState(i, 1, m_nrState-2);
                     const unsigned int s = GetSumStateNeighborhood(i);
                     const int newState = s/(nrInfected+nrIll+1)+m_g;
                     m_next_grid[i] = std::min(newState, m_nrState-1);
@@ -655,7 +633,7 @@ class Hodgepodge : public Grid2D<uint8_t>
 };
 
 // https://en.wikipedia.org/wiki/Abelian_sandpile_model
-class AbelianSandpile : public Grid2D<unsigned int> // m_next_grid will not be used
+class AbelianSandpile : public Grid2D<unsigned int> // m_next_grid is not used
 {      
     private:
         Grid2DPosition m_addingPosition;
@@ -696,7 +674,6 @@ class AbelianSandpile : public Grid2D<unsigned int> // m_next_grid will not be u
 
                 m_current_grid[GetIndexFromPosition(currentPosition)] -= m_threshold;
                 
-                // This for-loop should not be here (same as Grid2D::GetNeighborsInState)
                 for (int x = -1 ; x <= 1 ; x++){ 
                     for (int y = -1 ; y <= 1 ; y++){
                         if (abs(x) == abs(y)) continue; // VonNeumann neighborhood
@@ -752,7 +729,7 @@ class Wireworld : public Grid2D<uint8_t>
                         m_next_grid[i] = 3;
                         break;
                     case 3 : { // Conductor
-                        const uint8_t nrElectronHeadNeighbor = GetNeighborsInState(i, 1);
+                        const uint8_t nrElectronHeadNeighbor = CountNeighborsInState(i, 1);
                         if (nrElectronHeadNeighbor == 1 || nrElectronHeadNeighbor == 2)
                             m_next_grid[i] = 1;
                         else
@@ -778,57 +755,57 @@ class FallingSand : public Grid2D<uint8_t>
             Empty();
         }
 
+        // States --> Empty (0), Sand (1), Water (2), Stone (3)
         void Update() override {
-            for (std::size_t i = m_current_grid.size()-1; i > 0 ; i--) {
+            for (int i = m_current_grid.size()-1; i >= 0 ; i--) {
                 const uint8_t currentState = m_current_grid[i];
                 const int belowIndex = i + m_gridWidth;
-                switch (currentState) {
-                    case 1 : {
-                        if (IsIndexValid(belowIndex)){
-                            if (m_current_grid[belowIndex] == 0 || m_current_grid[belowIndex] == 2){
-                                m_current_grid[i] = m_current_grid[belowIndex];
-                                m_current_grid[belowIndex] = 1;
-                            } else {
-                                const Grid2DPosition drct = {(rand()%2)*2-1, 0}; // {-1, 0} or {1, 0}
-                                const Grid2DPosition belowPosition = {belowIndex%m_gridWidth, belowIndex/m_gridWidth}; 
-                                if (IsPositionValid(belowPosition + drct) && m_current_grid[belowIndex + drct.x] == 0){
-                                    m_current_grid[i] = 0;
-                                    m_current_grid[belowIndex + drct.x] = 1;
-                                }else if (IsPositionValid(belowPosition - drct) && m_current_grid[belowIndex - drct.x] == 0){
-                                    m_current_grid[i] = 0;
-                                    m_current_grid[belowIndex - drct.x] = 1;
-                                }
-                            }
-                        }
-                        break;
-                    }
-                    case 2 : {
-                        if (IsIndexValid(belowIndex)){
-                            if (m_current_grid[belowIndex] == 0){
+
+                // Do not use switch(m_current_grid[i])
+                if (m_current_grid[i] == 1){
+                    if (IsIndexValid(belowIndex)){
+                        const uint8_t belowState = m_current_grid[belowIndex];
+                        if (belowState == 0 || belowState == 2){
+                            m_current_grid[i] = belowState;
+                            m_current_grid[belowIndex] = 1;
+                        } else if (belowState != 3) {
+                            const Grid2DPosition drct = {(rand()%2)*2-1, 0}; // {-1, 0} or {1, 0}
+                            const Grid2DPosition belowPosition = {belowIndex%m_gridWidth, belowIndex/m_gridWidth}; 
+                            if (IsPositionValid(belowPosition + drct) && m_current_grid[belowIndex + drct.x] == 0){
                                 m_current_grid[i] = 0;
-                                m_current_grid[belowIndex] = 2;
-                            } else {
-                                const Grid2DPosition drct = {(rand()%2)*2-1, 0}; // {-1, 0} or {1, 0}
-                                const Grid2DPosition belowPosition = {belowIndex%m_gridWidth, belowIndex/m_gridWidth}; 
-                                const Grid2DPosition currentPosition = belowPosition + Grid2DPosition{0, -1}; 
-                                if (IsPositionValid(belowPosition + drct) && m_current_grid[belowIndex + drct.x] == 0){
-                                    m_current_grid[i] = 0;
-                                    m_current_grid[belowIndex + drct.x] = 2;
-                                }else if (IsPositionValid(belowPosition - drct) && m_current_grid[belowIndex - drct.x] == 0){
-                                    m_current_grid[i] = 0;
-                                    m_current_grid[belowIndex - drct.x] = 2;
-                                }else if (IsPositionValid(currentPosition + drct) && m_current_grid[i + drct.x] == 0){
-                                    m_current_grid[i] = 0;
-                                    m_current_grid[i + drct.x] = 2;
-                                }else if (IsPositionValid(currentPosition - drct) && m_current_grid[i - drct.x] == 0){
-                                    m_current_grid[i] = 0;
-                                    m_current_grid[i - drct.x] = 2;
-                                }
+                                m_current_grid[belowIndex + drct.x] = 1;
+                            }else if (IsPositionValid(belowPosition - drct) && m_current_grid[belowIndex - drct.x] == 0){
+                                m_current_grid[i] = 0;
+                                m_current_grid[belowIndex - drct.x] = 1;
                             }
                         }
                     }
-                    default : // 0
-                        break;
+                }
+                
+                if (m_current_grid[i] == 2) { // Do not use else if
+                    if (IsIndexValid(belowIndex)){
+                        if (m_current_grid[belowIndex] == 0){
+                            m_current_grid[i] = 0;
+                            m_current_grid[belowIndex] = 2;
+                        } else {
+                            const Grid2DPosition drct = {(rand()%2)*2-1, 0}; // {-1, 0} or {1, 0}
+                            const Grid2DPosition currentPosition = {i%m_gridWidth, i/m_gridWidth}; 
+                            const Grid2DPosition belowPosition = currentPosition + Grid2DPosition{0, 1}; 
+                            if (IsPositionValid(belowPosition + drct) && m_current_grid[belowIndex + drct.x] == 0){
+                                m_current_grid[i] = 0;
+                                m_current_grid[belowIndex + drct.x] = 2;
+                            }else if (IsPositionValid(belowPosition - drct) && m_current_grid[belowIndex - drct.x] == 0){
+                                m_current_grid[i] = 0;
+                                m_current_grid[belowIndex - drct.x] = 2;
+                            }else if (IsPositionValid(currentPosition + drct) && m_current_grid[i + drct.x] == 0){
+                                m_current_grid[i] = 0;
+                                m_current_grid[i + drct.x] = 2;
+                            }else if (IsPositionValid(currentPosition - drct) && m_current_grid[i - drct.x] == 0){
+                                m_current_grid[i] = 0;
+                                m_current_grid[i - drct.x] = 2;
+                            }
+                        }
+                    }
                 }
             }
         }

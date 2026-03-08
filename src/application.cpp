@@ -16,7 +16,7 @@ bool Application::Run()
     m_window.ClearRenderer();
     m_eventController.PollAllEvents();
     const bool loop = m_eventController.HandleWindowEvents();
-    m_eventController.HandlePolledEvents(); // Should not be here ?
+    m_eventController.HandlePolledEvents();
     m_eventController.HandleStateEvents();
 
     m_camera.Move(m_eventController.GetIsMoving(), m_eventController.GetMouse());

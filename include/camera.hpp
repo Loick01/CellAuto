@@ -1,8 +1,5 @@
 #pragma once
 
-// #include <algorithm>
-// #include <iostream>
-
 #include "grid.hpp"
 #include "type.hpp"
 #include "window.hpp"

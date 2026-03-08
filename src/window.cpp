@@ -3,7 +3,7 @@
 Window::Window(const std::string& title, const SDL_Color bg_color) :
     m_title(title), m_window(nullptr), m_renderer(nullptr), m_bg_color(bg_color)
 {
-    if(SDL_Init(SDL_INIT_VIDEO) < 0) std::cout << "Failed to initialize SDL library\n";
+    if(SDL_Init(SDL_INIT_VIDEO) < 0) throw std::runtime_error("Failed to initialize SDL library : " + std::string(SDL_GetError()));
     CreateWindow();
 }
 
@@ -17,10 +17,10 @@ Window::~Window()
 void Window::CreateWindow()
 {
     m_window = SDL_CreateWindow(m_title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    if(!m_window) std::cout << "Failed to initialize SDL window\n";
+    if(!m_window) throw std::runtime_error("Failed to initialize SDL window : " + std::string(SDL_GetError()));
     SDL_GetWindowSize(m_window, &m_width, &m_height);
     m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
-    if(!m_renderer) std::cout << "Failed to create a renderer for the window\n";
+    if(!m_renderer) throw std::runtime_error("Failed to create a SDL renderer : " + std::string(SDL_GetError()));
 }
 
 SDL_Renderer* Window::GetRenderer() const

@@ -11,7 +11,7 @@ int main()
         while(isRunning){
             isRunning = app.Run();
         }
-    } catch (const std::invalid_argument e) {
+    } catch (const std::exception e) {
         std::cerr << e.what() << "\n";
         return EXIT_FAILURE;
     }

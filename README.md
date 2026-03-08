@@ -1,4 +1,4 @@
-# CellAuto (WIP)
+# CellAuto
 
 <table align="center">
   <tr>

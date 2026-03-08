@@ -142,11 +142,12 @@ class Grid1D : public Grid
         void Draw(const PixelPosition cameraPosition, const float zoom) const override {
             m_window.SetRenderColor(m_cellColor);
             SDL_Renderer* window_renderer = m_window.GetRenderer();
+            const int finalSize = zoom*m_cellSize;
             for (std::size_t i = 0; i < m_grid.size(); i++) {
                 if (m_grid[i]){
                     const int line = i/m_gridWidth; 
                     const int column = i%m_gridWidth;
-                    SDL_Rect cellRect = {column*m_cellSize - cameraPosition.x , line*m_cellSize - cameraPosition.y, m_cellSize, m_cellSize};
+                    SDL_Rect cellRect = {column*finalSize - cameraPosition.x , line*finalSize - cameraPosition.y, finalSize, finalSize};
                     SDL_RenderFillRect(window_renderer, &cellRect);
                 }
             }
@@ -269,7 +270,8 @@ class Grid2D : public Grid
             }
         }
 
-        std::vector<T> GetNeighborStates(const Grid2DPosition cellPosition) const { 
+        template<typename Func>
+        void GetNeighborStates(const Grid2DPosition cellPosition, Func f) const {
             std::vector<T> neighborStates;
             for (int x = -1 ; x <= 1 ; x++){
                 for (int y = -1 ; y <= 1 ; y++){
@@ -285,44 +287,47 @@ class Grid2D : public Grid
 
                     const Grid2DPosition neighborPosition = cellPosition + Grid2DPosition{x, y};
                     if (IsPositionValid(neighborPosition))
-                        neighborStates.push_back(m_current_grid[GetIndexFromPosition(neighborPosition)]);
+                        f(m_current_grid[GetIndexFromPosition(neighborPosition)]);
                 }
             }
-            return neighborStates;
         }
 
         uint8_t CountNeighborsInState(const int cellIndex, const T state) const {
-            std::vector<T> neighborStates = GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth});
             uint8_t nr = 0;
-            for (const T cellState : neighborStates){
-                if (cellState == state) nr++;
-            }
+            GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth}, 
+                [&](T cellState){
+                    if (cellState == state) nr++;
+                }
+            );
             return nr;
         }
 
         uint8_t CountNeighborsBetweenState(const int cellIndex, const T lowerState, const T upperState) const {
-            std::vector<T> neighborStates = GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth});
             uint8_t nr = 0;
-            for (const T cellState : neighborStates){
-                if (cellState >= lowerState && cellState <= upperState) nr++;
-            }
+            GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth}, 
+                [&](T cellState){
+                    if (cellState >= lowerState && cellState <= upperState) nr++;
+                }
+            );
             return nr;
         }
 
         unsigned int GetSumStateNeighborhood(const int cellIndex){
-            std::vector<T> neighborStates = GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth});
             unsigned int sum = 0;
-            for (const T cellState : neighborStates)
-                sum += cellState;
+            GetNeighborStates(Grid2DPosition{cellIndex%m_gridWidth, cellIndex/m_gridWidth}, 
+                [&](T cellState){
+                    sum += cellState;
+                }
+            );
             return sum;
         }
 
         void Draw(const PixelPosition cameraPosition, const float zoom) const override {
             SDL_Renderer* window_renderer = m_window.GetRenderer();
+            const int finalSize = zoom*m_cellSize;
             for (std::size_t i = 0; i < m_current_grid.size(); i++) {
                 const T cellState = m_current_grid[i];
                 if (cellState != 0){
-                    const int finalSize = zoom*m_cellSize;
                     m_window.SetRenderColor(m_cellColors[cellState-1]);
                     const int line = i/m_gridWidth; 
                     const int column = i%m_gridWidth;

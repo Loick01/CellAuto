@@ -90,25 +90,38 @@ make
 
 <table align="center">
   <tr>
-    <td align="center">
+    <td align="center" width="250" valign="top">
       <a href="https://www.youtube.com/watch?v=l4J-b-8SOkM">
-        <img src="https://img.youtube.com/vi/l4J-b-8SOkM/maxresdefault.jpg" height="200">
+        <img
+          src="https://img.youtube.com/vi/l4J-b-8SOkM/maxresdefault.jpg"
+          width="240"
+          height="135"
+          style="object-fit: cover;"
+        >
       </a>
       <br>
       <strong>Game of Life, Langton's Ant and 1D Automata</strong>
     </td>
-    <td align="center">
+    <td align="center" width="250" valign="top">
       <a href="https://www.youtube.com/watch?v=bSjD-3EoghI">
-        <img src="https://img.youtube.com/vi/bSjD-3EoghI/maxresdefault.jpg" height="200">
+        <img
+          src="https://img.youtube.com/vi/bSjD-3EoghI/maxresdefault.jpg"
+          width="240"
+          height="135"
+          style="object-fit: cover;"
+        >
       </a>
       <br>
       <strong>Life-like Automata</strong>
     </td>
-  </tr>
-  <tr>
-    <td align="center">
+    <td align="center" width="250" valign="top">
       <a href="https://www.youtube.com/watch?v=1YaUlBjD1TQ">
-        <img src="https://img.youtube.com/vi/1YaUlBjD1TQ/maxresdefault.jpg" height="200">
+        <img
+          src="https://img.youtube.com/vi/1YaUlBjD1TQ/maxresdefault.jpg"
+          width="240"
+          height="135"
+          style="object-fit: cover;"
+        >
       </a>
       <br>
       <strong>Cyclic, Wireworld, Hodgepodge, Sandpile and Forest-fire model</strong>
